@@ -1,0 +1,20 @@
+export const THEME = {
+  colors: {
+    primary: '#0066FF',
+    primaryHover: '#0052CC',
+    dark: '#0F0F0F',
+    white: '#FFFFFF',
+    background: '#F9FAF9',
+    surface: '#FFFFFF',
+    subtle: '#ECEFEC',
+    text: '#000000',
+    muted: '#5A585A',
+    border: '#D1D6D2',
+    accentBlue: '#9DC4F5',
+    coral: '#FF5A4D',
+    warning: '#FBE74E',
+    success: '#22C55E',
+  },
+  spacing: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28, xxxl: 32, huge: 44, giant: 60 },
+  radius: { sm: 4, md: 10, lg: 18, pill: 35 },
+} as const;
