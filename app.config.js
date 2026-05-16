@@ -1,5 +1,6 @@
-// Dynamic Expo config — reads app.json and overrides googleServicesFile paths
-// with EAS file environment variables when present.
+// Dynamic Expo config — receives the resolved values from app.json via the
+// `config` parameter, then overlays googleServicesFile paths from EAS file
+// environment variables when present.
 //
 // On local dev (no env var set), the literal paths in app.json are used.
 // On EAS Build, GOOGLE_SERVICES_JSON / GOOGLE_SERVICES_INFO_PLIST are file
@@ -10,24 +11,22 @@
 // out of source control — EAS file env vars are the canonical secret-file
 // distribution mechanism.
 
-const appJson = require('./app.json');
-
-module.exports = () => {
-  const expo = { ...appJson.expo };
+module.exports = ({ config }) => {
+  const next = { ...config };
 
   if (process.env.GOOGLE_SERVICES_JSON) {
-    expo.android = {
-      ...expo.android,
+    next.android = {
+      ...next.android,
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON,
     };
   }
 
   if (process.env.GOOGLE_SERVICES_INFO_PLIST) {
-    expo.ios = {
-      ...expo.ios,
+    next.ios = {
+      ...next.ios,
       googleServicesFile: process.env.GOOGLE_SERVICES_INFO_PLIST,
     };
   }
 
-  return { expo };
+  return next;
 };
