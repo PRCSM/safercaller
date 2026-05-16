@@ -8,6 +8,7 @@ import { auth, db } from '../../firebaseConfig';
 import AuthStack from './AuthStack';
 import AppStack from './AppStack';
 import ProfileSetupScreen from '../screens/auth/ProfileSetupScreen';
+import VerificationScreen from '../screens/auth/VerificationScreen';
 import { useAuthStore } from '../store/authStore';
 import { IS_MOCK } from '../constants/config';
 import { mockUser, mockProfile } from '../services/mock/mockData';
@@ -76,9 +77,16 @@ export default function RootNavigator() {
   }
 
   if (isAuthenticated && !profile) {
+    // RNFirebase Auth signs the user in the moment OTP succeeds — that
+    // fires onAuthStateChanged above and flips this gate into the
+    // "authenticated but no profile" branch BEFORE the user has reached
+    // Verification. Register both ProfileSetup and Verification here so
+    // the rest of the onboarding flow (ProfileSetup → Verification) can
+    // navigate within this mini-stack.
     return (
       <ProfileSetupStack.Navigator screenOptions={{ headerShown: false, ...fadeScale }}>
         <ProfileSetupStack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
+        <ProfileSetupStack.Screen name="Verification"  component={VerificationScreen} />
       </ProfileSetupStack.Navigator>
     );
   }
