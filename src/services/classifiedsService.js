@@ -2,8 +2,8 @@ import {
   collection, addDoc, getDocs, getDoc, doc,
   updateDoc, setDoc, query, where,
   orderBy, limit, startAfter, serverTimestamp
-} from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+} from '@react-native-firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from '@react-native-firebase/storage';
 import { db, storage } from '../../firebaseConfig';
 
 export const createListing = async (sellerId, data, mediaFiles = []) => {

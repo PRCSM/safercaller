@@ -1,4 +1,4 @@
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from '@react-native-firebase/storage';
 import { storage } from '../../firebaseConfig';
 
 /**

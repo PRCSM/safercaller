@@ -1,4 +1,4 @@
-import { httpsCallable } from 'firebase/functions';
+import { httpsCallable } from '@react-native-firebase/functions';
 import { functions } from '../../firebaseConfig';
 
 /**

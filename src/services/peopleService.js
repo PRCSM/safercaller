@@ -1,7 +1,7 @@
 import {
   collection, getDocs, query, where,
   orderBy, limit, startAfter
-} from 'firebase/firestore';
+} from '@react-native-firebase/firestore';
 import { db } from '../../firebaseConfig';
 
 const PUBLIC_FIELDS = [

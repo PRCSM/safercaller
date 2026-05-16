@@ -9,8 +9,8 @@ import {
   where,
   getDocs,
   limit,
-} from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+} from '@react-native-firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from '@react-native-firebase/storage';
 import { db, storage } from '../../firebaseConfig';
 
 /**

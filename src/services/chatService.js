@@ -1,8 +1,8 @@
 import {
   collection, addDoc, getDocs, getDoc, doc, updateDoc,
   query, where, orderBy, limit, onSnapshot, serverTimestamp
-} from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+} from '@react-native-firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from '@react-native-firebase/storage';
 import { db, storage } from '../../firebaseConfig';
 
 export const getChatId = (uid1, uid2) => [uid1, uid2].sort().join('_');
@@ -41,7 +41,7 @@ export const sendMessage = async (chatId, senderId, receiverId, text, mediaUri =
       lastAt: serverTimestamp(),
     }).catch(async () => {
       // Doc may not exist yet — create it
-      const { setDoc } = await import('firebase/firestore');
+      const { setDoc } = await import('@react-native-firebase/firestore');
       await setDoc(doc(db, 'chats', chatId), {
         participants: [senderId, receiverId],
         lastMessage: text || '📎 Media',
@@ -112,7 +112,7 @@ export const deleteMessage = async (chatId, msgId) => {
 
 export const blockUser = async (uid, targetUid) => {
   try {
-    const { arrayUnion } = await import('firebase/firestore');
+    const { arrayUnion } = await import('@react-native-firebase/firestore');
     await updateDoc(doc(db, 'users', uid), {
       blockedUsers: arrayUnion(targetUid),
     });

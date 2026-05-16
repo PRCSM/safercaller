@@ -9,7 +9,7 @@ import {
   serverTimestamp,
   limit,
   orderBy,
-} from 'firebase/firestore';
+} from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db } from '../../firebaseConfig';
 import { uploadFile } from './storageService';
