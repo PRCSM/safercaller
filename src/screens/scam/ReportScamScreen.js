@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import Animated, {
@@ -181,8 +182,8 @@ export default function ReportScamScreen({ navigation }) {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <View style={styles.header}>
-            <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
-              <AppText variant="heading">←</AppText>
+            <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.headerBack}>
+              <Ionicons name="arrow-back" size={22} color="#000" />
             </Pressable>
             <AppText variant="label" style={styles.headerTitle}>
               {STRINGS.scam.reportTitle}
@@ -194,7 +195,8 @@ export default function ReportScamScreen({ navigation }) {
             keyboardShouldPersistTaps="handled"
           >
             <StaggerBlock index={0} style={styles.warningBanner}>
-              <AppText variant="caption" color={THEME.colors.muted}>
+              <Ionicons name="warning-outline" size={20} color="#FBE74E" />
+              <AppText variant="caption" color={THEME.colors.muted} style={{ flex: 1 }}>
                 {STRINGS.scam.warningBanner}
               </AppText>
             </StaggerBlock>
@@ -264,9 +266,12 @@ export default function ReportScamScreen({ navigation }) {
             </StaggerBlock>
 
             <StaggerBlock index={8} style={styles.section}>
-              <AppText variant="caption" color={THEME.colors.muted} style={styles.fieldLabel}>
-                {STRINGS.scam.labels.socialLinks.toUpperCase()}
-              </AppText>
+              <View style={styles.fieldLabelRow}>
+                <Ionicons name="link-outline" size={12} color="#5A585A" />
+                <AppText variant="caption" color={THEME.colors.muted} style={styles.fieldLabel}>
+                  {STRINGS.scam.labels.socialLinks.toUpperCase()}
+                </AppText>
+              </View>
               <View style={styles.linkRow}>
                 <TextInput
                   value={linkInput}
@@ -316,7 +321,8 @@ export default function ReportScamScreen({ navigation }) {
                   return (
                     <Pressable key={`empty-${i}`} onPress={addProof}>
                       <View style={styles.emptySlot}>
-                        <AppText variant="heading" color={THEME.colors.border}>+</AppText>
+                        <Ionicons name="camera-outline" size={22} color="#5A585A" />
+                        <Ionicons name="add" size={20} color={THEME.colors.border} />
                       </View>
                     </Pressable>
                   );
@@ -335,6 +341,8 @@ export default function ReportScamScreen({ navigation }) {
                 showSuccess={success}
                 disabled={success}
                 onPress={submit}
+                leftIcon={<Ionicons name="document-text-outline" size={18} color="#fff" />}
+                rightIcon={<Ionicons name="arrow-forward" size={18} color="#fff" />}
               />
               <Pressable onPress={() => navigation.goBack()} hitSlop={6} disabled={submitting}>
                 <AppText variant="caption" color={THEME.colors.muted} style={styles.cancel}>
@@ -433,7 +441,7 @@ function PickerField({ label, value, options, onChange }) {
         <AppText variant="label" color={value ? THEME.colors.text : THEME.colors.border}>
           {value || 'Select…'}
         </AppText>
-        <AppText variant="label" color={THEME.colors.muted}>▾</AppText>
+        <Ionicons name="chevron-down" size={18} color="#5A585A" />
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -450,7 +458,7 @@ function PickerField({ label, value, options, onChange }) {
                   <AppText variant="label" color={opt === value ? THEME.colors.primary : THEME.colors.text}>
                     {opt}
                   </AppText>
-                  {opt === value && <AppText variant="label" color={THEME.colors.primary}>✓</AppText>}
+                  {opt === value && <Ionicons name="checkmark" size={18} color={THEME.colors.primary} />}
                 </Pressable>
               ))}
             </ScrollView>
@@ -484,8 +492,8 @@ function SocialLinkChip({ value, onRemove }) {
       <AppText variant="caption" numberOfLines={1} style={{ maxWidth: 160 }}>
         {value}
       </AppText>
-      <Pressable onPress={handleRemove} hitSlop={6}>
-        <AppText variant="caption" color={THEME.colors.muted}>  ✕</AppText>
+      <Pressable onPress={handleRemove} hitSlop={6} style={{ marginLeft: 4 }}>
+        <Ionicons name="close" size={14} color="#5A585A" />
       </Pressable>
     </Animated.View>
   );
@@ -521,14 +529,18 @@ function ProofTile({ proof, onRemove }) {
           <Image source={{ uri: proof.uri }} style={StyleSheet.absoluteFill} />
         ) : (
           <View style={styles.proofDocBody}>
-            <AppText variant="heading">{proof.type === 'video' ? '🎬' : '📄'}</AppText>
+            <Ionicons
+              name={proof.type === 'video' ? 'videocam-outline' : 'document-outline'}
+              size={28}
+              color="#fff"
+            />
             <AppText variant="caption" numberOfLines={1} color={THEME.colors.muted} style={{ maxWidth: 80 }}>
               {proof.name}
             </AppText>
           </View>
         )}
         <Animated.View style={[styles.proofCheck, checkStyle]}>
-          <AppText variant="label" color={THEME.colors.white}>✓</AppText>
+          <Ionicons name="checkmark" size={14} color="#fff" />
         </Animated.View>
       </Animated.View>
     </Pressable>
@@ -558,15 +570,34 @@ const styles = StyleSheet.create({
   },
 
   warningBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     backgroundColor: 'rgba(251,190,36,0.12)',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: THEME.colors.warning,
     padding: 12,
   },
+  warningEmoji: {
+    fontSize: 20,
+  },
 
   field: { gap: 4 },
   fieldLabel: { fontSize: 10, letterSpacing: 0.5 },
+  fieldLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  headerBack: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ECEFEC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   input: {
     height: 48,
     borderRadius: 12,
@@ -640,8 +671,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   emptySlot: {
-    width: 90,
-    height: 90,
+    width: 96,
+    height: 96,
     borderRadius: 12,
     borderWidth: 1.5,
     borderStyle: 'dashed',
@@ -649,10 +680,14 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 2,
+  },
+  emptySlotEmoji: {
+    fontSize: 18,
   },
   proofTile: {
-    width: 90,
-    height: 90,
+    width: 96,
+    height: 96,
     borderRadius: 12,
     backgroundColor: THEME.colors.accentBlue,
     alignItems: 'center',

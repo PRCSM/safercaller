@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -42,20 +43,30 @@ const COUNTRY_CODE = '+91';
  *     params. Loading dots show on the button via Button's `loading`
  *     prop while the chained calls are in flight.
  */
+// AUDIT FIX: Indian mobile regex — first digit must be 6-9, then 9 more digits.
+const INDIAN_PHONE_REGEX = /^[6-9]\d{9}$/;
+
 export default function SignupScreen({ navigation }) {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [phoneFocused, setPhoneFocused] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [sending, setSending] = useState(false);
+  const [phoneError, setPhoneError] = useState(null); // AUDIT FIX: inline error state
+
+  const digits = phone.trim().replace(/\D/g, '');
+  const isPhoneValid = INDIAN_PHONE_REGEX.test(digits);
 
   const sendOTP = async () => {
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length < 10) {
-      toast.error('Enter a valid phone number');
+    // AUDIT FIX: prevent double-tap.
+    if (sending) return;
+    // AUDIT FIX: strict Indian regex with inline error display (not toast).
+    if (!isPhoneValid) {
+      setPhoneError('Enter a valid 10-digit Indian mobile number');
       haptics.error();
       return;
     }
+    setPhoneError(null);
     setSending(true);
     const fullPhone = `${COUNTRY_CODE}${digits}`;
     try {
@@ -92,16 +103,18 @@ export default function SignupScreen({ navigation }) {
             <View style={styles.topBar}>
               <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
                 <View style={styles.backButton}>
-                  <AppText variant="label">←</AppText>
+                  <Ionicons name="arrow-back" size={22} color="#000" />
                 </View>
               </Pressable>
-              <AppText variant="caption" color={THEME.colors.muted}>
-                {STRINGS.signup.stepIndicator}
-              </AppText>
+              <View style={styles.stepBadge}>
+                <AppText variant="caption" color={THEME.colors.muted} style={styles.stepBadgeText}>
+                  {STRINGS.signup.stepIndicator}
+                </AppText>
+              </View>
             </View>
 
             <StaggerBlock index={0}>
-              <AppText variant="heading">{STRINGS.signup.title}</AppText>
+              <AppText variant="heading" style={styles.heading}>{STRINGS.signup.title}</AppText>
               <AppText variant="caption" color={THEME.colors.muted} style={styles.subtitle}>
                 {STRINGS.signup.subtitle}
               </AppText>
@@ -123,16 +136,22 @@ export default function SignupScreen({ navigation }) {
                 <View style={styles.phoneDivider} />
                 <TextInput
                   value={phone}
-                  onChangeText={setPhone}
+                  onChangeText={(v) => { setPhone(v); if (phoneError) setPhoneError(null); }}
                   onFocus={() => setPhoneFocused(true)}
                   onBlur={() => setPhoneFocused(false)}
                   placeholder={STRINGS.signup.phonePlaceholder}
                   placeholderTextColor={THEME.colors.border}
                   keyboardType="phone-pad"
                   style={styles.phoneInput}
-                  maxLength={12}
+                  maxLength={10}
                 />
               </View>
+              {/* AUDIT FIX: inline error displayed below the field. */}
+              {phoneError && (
+                <AppText variant="caption" color={THEME.colors.coral} style={styles.inlineError}>
+                  {phoneError}
+                </AppText>
+              )}
             </StaggerBlock>
 
             <StaggerBlock index={2} style={styles.dividerRow}>
@@ -170,17 +189,19 @@ export default function SignupScreen({ navigation }) {
             </StaggerBlock>
 
             <StaggerBlock index={5} style={styles.sendButtonWrap}>
+              {/* AUDIT FIX: disable button while invalid OR sending. */}
               <Button
                 variant="primary"
                 label={STRINGS.signup.sendOtp}
                 loading={sending}
+                disabled={!isPhoneValid || sending}
                 onPress={sendOTP}
               />
             </StaggerBlock>
 
             <StaggerBlock index={6} style={styles.signInRow}>
               <Pressable onPress={handleSignInLink}>
-                <AppText variant="caption" color={THEME.colors.muted}>
+                <AppText variant="label" color={THEME.colors.muted}>
                   {STRINGS.signup.alreadyHaveAccount}
                 </AppText>
               </Pressable>
@@ -287,6 +308,20 @@ const styles = StyleSheet.create({
     fontSize: 25,
     color: THEME.colors.text,
     paddingVertical: 0,
+    letterSpacing: 1,
+  },
+  stepBadge: {
+    backgroundColor: THEME.colors.subtle,
+    borderRadius: THEME.borderRadius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  stepBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  heading: {
+    fontSize: 28,
   },
 
   dividerRow: {
@@ -332,6 +367,8 @@ const styles = StyleSheet.create({
   },
   signInRow: {
     alignItems: 'center',
-    marginTop: THEME.spacing.sm,
+    marginTop: 20,
   },
+  // AUDIT FIX: inline phone error.
+  inlineError: { marginTop: 6, fontSize: 12 },
 });

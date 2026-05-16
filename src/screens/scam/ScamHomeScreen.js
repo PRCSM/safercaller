@@ -7,6 +7,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   Easing,
   cancelAnimation,
@@ -37,9 +38,9 @@ const FILTERS = [
 ];
 
 const RISK_BADGE = {
-  open:      { label: 'HIGH RISK', bg: THEME.colors.coral,   fg: THEME.colors.white },
-  resolved:  { label: 'RESOLVED',  bg: THEME.colors.primary, fg: THEME.colors.white },
-  reviewing: { label: 'REVIEWING', bg: THEME.colors.warning, fg: THEME.colors.text },
+  open:      { label: 'HIGH RISK', bg: THEME.colors.coral,   fg: THEME.colors.white, iconName: 'alert-circle', iconColor: '#fff' },
+  resolved:  { label: 'RESOLVED',  bg: THEME.colors.primary, fg: THEME.colors.white, iconName: 'checkmark-circle', iconColor: '#fff' },
+  reviewing: { label: 'REVIEWING', bg: THEME.colors.warning, fg: THEME.colors.text,  iconName: 'time', iconColor: '#000' },
 };
 
 const STATUS_ACCENT = {
@@ -138,9 +139,20 @@ export default function ScamHomeScreen({ navigation }) {
           ))}
         </ScrollView>
 
-        <AppText variant="caption" color={THEME.colors.muted} style={styles.locationLine}>
-          Search near: {location}
-        </AppText>
+        <View style={styles.locationLine}>
+          <View style={styles.locationCluster}>
+            <Ionicons name="location-outline" size={14} color="#5A585A" />
+            <AppText variant="caption" color={THEME.colors.muted}>
+              Search near: {location}
+            </AppText>
+          </View>
+          <View style={styles.locationCluster}>
+            <Ionicons name="stats-chart-outline" size={14} color="#5A585A" />
+            <AppText variant="caption" color={THEME.colors.muted}>
+              {searchResults.length} results
+            </AppText>
+          </View>
+        </View>
 
         <FlatList
           data={searchResults}
@@ -196,14 +208,14 @@ function SearchBar({ value, focused, setFocused, onPressInput }) {
       onPress={onPressInput}
     >
       <Animated.View style={[styles.searchBar, animStyle]}>
-        <AppText variant="label" color={THEME.colors.muted} style={{ marginRight: 8 }}>🔍</AppText>
+        <Ionicons name="search" size={20} color="#5A585A" style={{ marginRight: 8 }} />
         <View style={styles.searchInput}>
           <AppText variant="label" color={value ? THEME.colors.text : THEME.colors.muted}>
             {value || STRINGS.scam.searchPlaceholder}
           </AppText>
         </View>
         <View style={styles.micWrap}>
-          <AppText variant="label" color={THEME.colors.white}>🎤</AppText>
+          <Ionicons name="mic" size={18} color="#fff" />
         </View>
       </Animated.View>
     </Pressable>
@@ -229,7 +241,7 @@ function FilterChip({ label, active, onPress }) {
   return (
     <Pressable onPress={onPress}>
       <Animated.View style={[styles.chip, animStyle]}>
-        <AppText variant="caption" color={active ? THEME.colors.white : THEME.colors.text}>
+        <AppText variant="caption" color={active ? THEME.colors.white : THEME.colors.text} style={styles.chipLabel}>
           {label}
         </AppText>
       </Animated.View>
@@ -277,10 +289,11 @@ function ResultCard({ report, index, onPress }) {
         <Animated.View style={[styles.cardStrip, { backgroundColor: accent }, stripStyle]} />
 
         <View style={styles.cardHeader}>
-          <AppText variant="label" numberOfLines={1} style={{ flex: 1 }}>
+          <AppText variant="label" numberOfLines={1} style={[{ flex: 1 }, styles.cardName]}>
             {report.scammerName ?? 'Unknown Scammer'}
           </AppText>
           <View style={[styles.riskBadge, { backgroundColor: badge.bg }]}>
+            <Ionicons name={badge.iconName} size={11} color={badge.iconColor} />
             <AppText variant="caption" color={badge.fg} style={styles.riskBadgeText}>
               {badge.label}
             </AppText>
@@ -302,9 +315,17 @@ function ResultCard({ report, index, onPress }) {
         <View style={styles.cardDivider} />
 
         <View style={styles.cardFooter}>
-          <AppText variant="caption" color={THEME.colors.muted} style={{ flex: 1 }}>
-            {report.complaintCount ?? 0} complaints · Score {report.reputationScore ?? 0}
-          </AppText>
+          <View style={styles.footerStats}>
+            <Ionicons name="document-text-outline" size={12} color="#5A585A" />
+            <AppText variant="caption" color={THEME.colors.muted}>
+              {report.complaintCount ?? 0} complaints
+            </AppText>
+            <AppText variant="caption" color={THEME.colors.muted}>·</AppText>
+            <Ionicons name="star" size={12} color="#FBE74E" />
+            <AppText variant="caption" color={THEME.colors.muted}>
+              Score {report.reputationScore ?? 0}
+            </AppText>
+          </View>
           <View style={[styles.statusPill, { backgroundColor: pillBg }]}>
             <AppText variant="caption" color={pillFg} style={styles.statusPillText}>
               {status === 'open' ? 'Open' : status === 'resolved' ? 'Resolved' : 'Reviewing'}
@@ -340,7 +361,7 @@ function FAB({ onPress }) {
       style={styles.fabPositioner}
     >
       <Animated.View style={[styles.fab, animStyle]}>
-        <AppText variant="heading" color={THEME.colors.white}>+</AppText>
+        <Ionicons name="add" size={28} color="#fff" />
       </Animated.View>
     </Pressable>
   );
@@ -388,14 +409,20 @@ const styles = StyleSheet.create({
     gap: THEME.spacing.sm,
   },
   chip: {
-    height: 32,
-    paddingHorizontal: 12,
-    borderRadius: 16,
+    height: 36,
+    paddingHorizontal: 14,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  chipLabel: {
+    fontSize: 13,
+  },
 
   locationLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: THEME.spacing.lg,
     paddingBottom: THEME.spacing.sm,
   },
@@ -411,8 +438,8 @@ const styles = StyleSheet.create({
     borderRadius: THEME.borderRadius.lg,
     borderWidth: 1,
     borderColor: THEME.colors.border,
-    padding: 16,
-    paddingLeft: 20,
+    padding: 20,
+    paddingLeft: 25,
     gap: 6,
     overflow: 'hidden',
   },
@@ -420,7 +447,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     top: 0,
-    width: 4,
+    width: 5,
+  },
+  cardName: {
+    fontSize: 15,
+    fontWeight: '600',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -428,9 +459,23 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   riskBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 4,
+  },
+  locationCluster: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  footerStats: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   riskBadgeText: {
     fontSize: 10,
@@ -471,9 +516,9 @@ const styles = StyleSheet.create({
     bottom: THEME.spacing.lg,
   },
   fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: THEME.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',

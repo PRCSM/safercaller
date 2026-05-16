@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { PageWrapper } from '../../components/common/PageWrapper';
 import { AppText } from '../../components/common/AppText';
 import { Button } from '../../components/common/Button';
@@ -41,18 +42,27 @@ export default function MoreScreen({ navigation }) {
   // Refresh reputationScore on mount via the computeReputationScore Cloud
   // Function. Silent — the displayed score updates if the new value differs
   // from what's already on the persisted profile.
+  //
+  // Delayed 1s after mount so the Firebase Auth ID token is guaranteed to
+  // be refreshed before the callable Function runs (calling it too early
+  // on a cold-start mount yields UNAUTHENTICATED).
   useEffect(() => {
     const uid = user?.uid;
-    if (!uid) return;
+    if (!uid) return undefined;
     let cancelled = false;
-    (async () => {
-      const score = await functionsService.computeReputationScore(uid);
-      if (cancelled || score == null) return;
-      if (profile && profile.reputationScore !== score) {
-        setProfile({ ...profile, reputationScore: score });
+    const timer = setTimeout(async () => {
+      try {
+        const score = await functionsService.computeReputationScore(uid);
+        if (cancelled || score == null) return;
+        if (profile && profile.reputationScore !== score) {
+          setProfile({ ...profile, reputationScore: score });
+        }
+      } catch (err) {
+        // Silent — score row shows the cached value from authStore.profile.
+        console.warn('Score refresh skipped:', err?.code ?? err?.message ?? err);
       }
-    })();
-    return () => { cancelled = true; };
+    }, 1000);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [user?.uid]);
 
   const onSignOut = async () => {
@@ -113,7 +123,7 @@ export default function MoreScreen({ navigation }) {
                   {profile?.profession ?? 'Profession'}
                 </AppText>
                 <View style={styles.scorePill}>
-                  <AppText variant="caption" color={THEME.colors.primary}>
+                  <AppText variant="caption" color={THEME.colors.primary} style={styles.scorePillText}>
                     Score {profile?.reputationScore ?? 0}
                   </AppText>
                 </View>
@@ -121,9 +131,9 @@ export default function MoreScreen({ navigation }) {
             </View>
 
             <View style={styles.verifyChips}>
-              <Chip label="✓ Phone" />
-              {profile?.verified?.idProof && <Chip label="✓ ID" />}
-              {profile?.verified?.liveness && <Chip label="✓ Liveness" />}
+              <Chip iconName="call-outline" label="Phone" />
+              {profile?.verified?.idProof && <Chip iconName="card-outline" label="ID" />}
+              {profile?.verified?.liveness && <Chip iconName="videocam-outline" label="Liveness" />}
             </View>
 
             <Pressable
@@ -138,45 +148,48 @@ export default function MoreScreen({ navigation }) {
           </View>
 
           {/* Account section */}
-          <Section label={STRINGS.more.sections.account}>
+          <Section iconName="person-outline" label={STRINGS.more.sections.account}>
             <Row
-              glyph="👑"
+              iconName="star"
+              iconColor="#FBE74E"
               label={STRINGS.more.items.premium}
               onPress={comingSoon('Premium upgrade')}
               right={<UpgradePill />}
             />
             <Row
-              glyph="💬"
+              iconName="chatbubbles-outline"
+              iconColor={THEME.colors.primary}
               label="Messages"
               onPress={() => navigation.getParent()?.navigate('ChatStack', { screen: 'Conversations' })}
             />
-            <Row glyph="📋" label={STRINGS.more.items.complaints} onPress={comingSoon('My Complaints')} />
-            <Row glyph="🏪" label={STRINGS.more.items.listings}   onPress={comingSoon('My Listings')} />
+            <Row iconName="flag-outline" iconColor="#FF5A4D" label={STRINGS.more.items.complaints} onPress={comingSoon('My Complaints')} />
+            <Row iconName="storefront-outline" iconColor={THEME.colors.primary} label={STRINGS.more.items.listings} onPress={comingSoon('My Listings')} />
             <Row
-              glyph="🔒"
+              iconName="lock-closed-outline"
               label={STRINGS.more.items.security}
               onPress={() => navigation.navigate('Settings')}
             />
           </Section>
 
           {/* Support section */}
-          <Section label={STRINGS.more.sections.support}>
-            <Row glyph="?"  label={STRINGS.more.items.help}    onPress={comingSoon('Help & Support')} />
-            <Row glyph="§"  label={STRINGS.more.items.privacy} onPress={comingSoon('Privacy Policy')} />
-            <Row glyph="§"  label={STRINGS.more.items.terms}   onPress={comingSoon('Terms of Service')} />
+          <Section iconName="chatbubble-outline" label={STRINGS.more.sections.support}>
+            <Row iconName="help-circle-outline" label={STRINGS.more.items.help} onPress={comingSoon('Help & Support')} />
+            <Row iconName="document-text-outline" label={STRINGS.more.items.privacy} onPress={comingSoon('Privacy Policy')} />
+            <Row iconName="document-outline" label={STRINGS.more.items.terms} onPress={comingSoon('Terms of Service')} />
           </Section>
 
           {/* App section */}
-          <Section label={STRINGS.more.sections.app}>
-            <Row glyph="🔔" label={STRINGS.more.items.notifications} onPress={comingSoon('Notifications')} />
+          <Section iconName="settings-outline" label={STRINGS.more.sections.app}>
+            <Row iconName="notifications-outline" label={STRINGS.more.items.notifications} onPress={comingSoon('Notifications')} />
             <ToggleRow
-              glyph="🛡"
+              iconName="shield-checkmark-outline"
+              iconColor={THEME.colors.primary}
               label={STRINGS.more.items.scamBlock}
               value={scamBlockEnabled}
               onChange={() => { haptics.light(); toggleScamBlock(); }}
             />
             <ToggleRow
-              glyph="🚫"
+              iconName="ban-outline"
               label={STRINGS.more.items.spamBlock}
               value={spamBlockEnabled}
               onChange={() => { haptics.light(); toggleSpamBlock(); }}
@@ -194,6 +207,7 @@ export default function MoreScreen({ navigation }) {
             label={STRINGS.common.signOut}
             onPress={onSignOut}
             style={styles.signOutBtn}
+            leftIcon={<Ionicons name="log-out-outline" size={18} color="#fff" />}
           />
         </ScrollView>
       </PageWrapper>
@@ -203,9 +217,12 @@ export default function MoreScreen({ navigation }) {
 
 /* ─────────────────────────────  Subcomponents  ───────────────────────────── */
 
-function Chip({ label }) {
+function Chip({ iconName, label }) {
   return (
     <View style={styles.chip}>
+      {iconName && (
+        <Ionicons name={iconName} size={11} color={THEME.colors.primary} style={{ marginRight: 4 }} />
+      )}
       <AppText variant="caption" style={styles.chipText}>{label}</AppText>
     </View>
   );
@@ -221,12 +238,15 @@ function UpgradePill() {
   );
 }
 
-function Section({ label, children }) {
+function Section({ iconName, label, children }) {
   return (
     <View style={styles.section}>
-      <AppText variant="caption" color={THEME.colors.muted} style={styles.sectionLabel}>
-        {label.toUpperCase()}
-      </AppText>
+      <View style={styles.sectionLabelRow}>
+        {iconName && <Ionicons name={iconName} size={12} color={THEME.colors.muted} />}
+        <AppText variant="caption" color={THEME.colors.muted} style={styles.sectionLabel}>
+          {label.toUpperCase()}
+        </AppText>
+      </View>
       <View style={styles.sectionBody}>
         {children}
       </View>
@@ -234,23 +254,27 @@ function Section({ label, children }) {
   );
 }
 
-function Row({ glyph, label, onPress, right }) {
+function Row({ iconName, iconColor, label, onPress, right }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [
       styles.row,
       pressed && { backgroundColor: 'rgba(0,0,0,0.02)' },
     ]}>
-      <AppText variant="label" color={THEME.colors.muted} style={styles.rowGlyph}>{glyph}</AppText>
+      {iconName && (
+        <Ionicons name={iconName} size={20} color={iconColor ?? THEME.colors.muted} style={styles.rowIcon} />
+      )}
       <AppText variant="label" style={{ flex: 1 }}>{label}</AppText>
-      {right ?? <AppText variant="label" color={THEME.colors.border}>›</AppText>}
+      {right ?? <Ionicons name="chevron-forward" size={18} color={THEME.colors.border} />}
     </Pressable>
   );
 }
 
-function ToggleRow({ glyph, label, value, onChange }) {
+function ToggleRow({ iconName, iconColor, label, value, onChange }) {
   return (
     <View style={styles.row}>
-      <AppText variant="label" color={THEME.colors.muted} style={styles.rowGlyph}>{glyph}</AppText>
+      {iconName && (
+        <Ionicons name={iconName} size={20} color={iconColor ?? THEME.colors.muted} style={styles.rowIcon} />
+      )}
       <AppText variant="label" style={{ flex: 1 }}>{label}</AppText>
       <Switch
         value={value}
@@ -281,7 +305,7 @@ const styles = StyleSheet.create({
     borderRadius: THEME.borderRadius.lg,
     borderWidth: 1,
     borderColor: THEME.colors.border,
-    padding: 20,
+    padding: 24,
     gap: 12,
   },
   profileRow: {
@@ -290,25 +314,28 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: THEME.colors.accentBlue,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   initials: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '600',
   },
   scorePill: {
     alignSelf: 'flex-start',
     marginTop: 6,
     backgroundColor: 'rgba(0,102,255,0.12)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: THEME.borderRadius.pill,
+  },
+  scorePillText: {
+    fontSize: 13,
   },
   verifyChips: {
     flexDirection: 'row',
@@ -316,8 +343,10 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: THEME.colors.subtle,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: THEME.borderRadius.pill,
   },
@@ -330,10 +359,9 @@ const styles = StyleSheet.create({
     marginTop: THEME.spacing.xl,
   },
   sectionLabel: {
-    fontSize: 10,
-    letterSpacing: 0.5,
-    paddingHorizontal: THEME.spacing.lg,
-    paddingBottom: THEME.spacing.sm,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   sectionBody: {
     marginHorizontal: THEME.spacing.lg,
@@ -347,9 +375,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: THEME.colors.subtle,
   },
-  rowGlyph: {
+  rowIcon: {
     width: 20,
     textAlign: 'center',
+  },
+  sectionLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: THEME.spacing.lg,
+    paddingBottom: THEME.spacing.sm,
   },
 
   upgradePill: {

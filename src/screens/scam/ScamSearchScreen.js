@@ -8,6 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   Easing,
   interpolateColor,
@@ -36,9 +37,9 @@ const FILTERS = [
 ];
 
 const RISK_BADGE = {
-  open:      { label: 'HIGH RISK', bg: THEME.colors.coral,   fg: THEME.colors.white },
-  resolved:  { label: 'RESOLVED',  bg: THEME.colors.primary, fg: THEME.colors.white },
-  reviewing: { label: 'REVIEWING', bg: THEME.colors.warning, fg: THEME.colors.text },
+  open:      { label: 'HIGH RISK', bg: THEME.colors.coral,   fg: THEME.colors.white, iconName: 'alert-circle', iconColor: '#fff' },
+  resolved:  { label: 'RESOLVED',  bg: THEME.colors.primary, fg: THEME.colors.white, iconName: 'checkmark-circle', iconColor: '#fff' },
+  reviewing: { label: 'REVIEWING', bg: THEME.colors.warning, fg: THEME.colors.text,  iconName: 'time', iconColor: '#000' },
 };
 const STATUS_ACCENT = {
   open: THEME.colors.coral, resolved: THEME.colors.primary, reviewing: THEME.colors.warning,
@@ -101,11 +102,11 @@ export default function ScamSearchScreen({ navigation, route }) {
             hitSlop={10}
             style={styles.backButton}
           >
-            <AppText variant="label">←</AppText>
+            <Ionicons name="arrow-back" size={22} color="#000" />
           </Pressable>
 
           <View style={styles.searchBar}>
-            <AppText variant="label" color={THEME.colors.muted} style={styles.searchIcon}>🔍</AppText>
+            <Ionicons name="search" size={20} color="#5A585A" style={styles.searchIcon} />
             <TextInput
               ref={inputRef}
               value={queryText}
@@ -118,7 +119,7 @@ export default function ScamSearchScreen({ navigation, route }) {
             />
             {queryText.length > 0 && (
               <Pressable hitSlop={6} onPress={() => setQueryText('')}>
-                <AppText variant="caption" color={THEME.colors.muted}>✕</AppText>
+                <Ionicons name="close-circle" size={18} color="#5A585A" />
               </Pressable>
             )}
           </View>
@@ -168,12 +169,22 @@ export default function ScamSearchScreen({ navigation, route }) {
             )}
             ListEmptyComponent={
               <View style={styles.emptyWrap}>
-                <AppText variant="label" style={styles.emptyIcon}>🔎</AppText>
-                <AppText variant="caption" color={THEME.colors.muted}>
+                <Ionicons
+                  name={queryText.trim().length === 0 ? 'search' : 'help-circle-outline'}
+                  size={48}
+                  color="#D1D6D2"
+                  style={styles.emptyIcon}
+                />
+                <AppText variant="label" style={styles.emptyTitle}>
                   {queryText.trim().length === 0
-                    ? 'Type to search the scam database.'
-                    : `No reports found for "${queryText.trim()}"`}
+                    ? 'Search by name, number or keyword'
+                    : 'No results found'}
                 </AppText>
+                {queryText.trim().length > 0 && (
+                  <AppText variant="caption" color={THEME.colors.muted} style={styles.emptySub}>
+                    Nothing matched "{queryText.trim()}"
+                  </AppText>
+                )}
               </View>
             }
           />
@@ -243,6 +254,7 @@ function ResultCard({ report, index, onPress }) {
             {report.scammerName ?? 'Unknown Scammer'}
           </AppText>
           <View style={[styles.riskBadge, { backgroundColor: badge.bg }]}>
+            <Ionicons name={badge.iconName} size={11} color={badge.iconColor} />
             <AppText variant="caption" color={badge.fg} style={styles.riskBadgeText}>
               {badge.label}
             </AppText>
@@ -372,7 +384,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  riskBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  riskBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
   riskBadgeText: { fontSize: 10, fontWeight: '600' },
   categoryChip: {
     alignSelf: 'flex-start',
@@ -400,8 +419,19 @@ const styles = StyleSheet.create({
 
   emptyWrap: {
     alignItems: 'center',
-    paddingTop: 64,
+    paddingTop: 80,
     gap: 12,
   },
-  emptyIcon: { fontSize: 32 },
+  emptyIcon: { fontSize: 48, marginBottom: 4 },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingHorizontal: 32,
+  },
+  emptySub: {
+    fontSize: 13,
+    textAlign: 'center',
+    paddingHorizontal: 32,
+  },
 });

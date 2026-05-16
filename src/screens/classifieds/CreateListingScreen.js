@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import Animated, {
@@ -196,8 +197,8 @@ export default function CreateListingScreen({ navigation }) {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <View style={styles.header}>
-            <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
-              <AppText variant="heading">←</AppText>
+            <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.headerBack}>
+              <Ionicons name="arrow-back" size={22} color="#000" />
             </Pressable>
             <AppText variant="label" style={styles.headerTitle}>
               {STRINGS.classifieds.createTitle}
@@ -221,8 +222,8 @@ export default function CreateListingScreen({ navigation }) {
               value={type}
               onChange={setType}
               options={[
-                { id: 'product', label: STRINGS.classifieds.typeProduct },
-                { id: 'service', label: STRINGS.classifieds.typeService },
+                { id: 'product', label: STRINGS.classifieds.typeProduct, iconName: 'cube-outline' },
+                { id: 'service', label: STRINGS.classifieds.typeService, iconName: 'construct-outline' },
               ]}
             />
 
@@ -292,8 +293,9 @@ export default function CreateListingScreen({ navigation }) {
                   onChange={(v) => setField('location', v)}
                 />
                 <Pressable onPress={useMyLocation} hitSlop={6} style={styles.useLocBtn}>
+                  <Ionicons name="locate-outline" size={14} color={THEME.colors.primary} />
                   <AppText variant="caption" color={THEME.colors.primary}>
-                    📍 {STRINGS.classifieds.useMyLocation}
+                    {STRINGS.classifieds.useMyLocation}
                   </AppText>
                 </Pressable>
               </View>
@@ -308,7 +310,8 @@ export default function CreateListingScreen({ navigation }) {
             </View>
 
             <View style={styles.expiryBanner}>
-              <AppText variant="caption" color={THEME.colors.muted}>
+              <Ionicons name="time-outline" size={20} color="#5A585A" />
+              <AppText variant="caption" color={THEME.colors.muted} style={{ flex: 1 }}>
                 {STRINGS.classifieds.autoExpireNote}
               </AppText>
             </View>
@@ -319,6 +322,7 @@ export default function CreateListingScreen({ navigation }) {
               loading={submitting}
               onPress={submit}
               style={styles.submitBtn}
+              leftIcon={<Ionicons name="rocket-outline" size={18} color="#fff" />}
             />
           </ScrollView>
         </KeyboardAvoidingView>
@@ -336,6 +340,7 @@ function SegmentedToggle({ value, onChange, options }) {
         <SegmentedOption
           key={opt.id}
           label={opt.label}
+          iconName={opt.iconName}
           active={value === opt.id}
           onPress={() => { haptics.light(); onChange(opt.id); }}
         />
@@ -344,7 +349,7 @@ function SegmentedToggle({ value, onChange, options }) {
   );
 }
 
-function SegmentedOption({ label, active, onPress }) {
+function SegmentedOption({ label, iconName, active, onPress }) {
   const progress = useSharedValue(active ? 1 : 0);
   useEffect(() => {
     progress.value = withSpring(active ? 1 : 0, { damping: 18, stiffness: 220 });
@@ -366,6 +371,13 @@ function SegmentedOption({ label, active, onPress }) {
   return (
     <Pressable onPress={onPress} style={{ flex: 1 }}>
       <Animated.View style={[styles.segOpt, animStyle]}>
+        {iconName && (
+          <Ionicons
+            name={iconName}
+            size={16}
+            color={active ? THEME.colors.text : THEME.colors.muted}
+          />
+        )}
         <AppText variant="label" color={active ? THEME.colors.text : THEME.colors.muted}>
           {label}
         </AppText>
@@ -385,9 +397,9 @@ function MediaRow({ media, onAdd, onRemove }) {
     >
       <Pressable onPress={onAdd}>
         <View style={styles.mediaEmpty}>
-          <AppText variant="heading" color={THEME.colors.border}>+</AppText>
-          <AppText variant="caption" color={THEME.colors.muted} style={{ fontSize: 10 }}>
-            Add photo
+          <Ionicons name="camera-outline" size={24} color="#5A585A" />
+          <AppText variant="caption" color={THEME.colors.muted} style={{ fontSize: 11 }}>
+            Add Photos
           </AppText>
         </View>
       </Pressable>
@@ -408,7 +420,7 @@ function MediaTile({ item, onRemove }) {
     <Animated.View style={[styles.mediaTile, animStyle]}>
       <Image source={{ uri: item.uri }} style={StyleSheet.absoluteFill} />
       <Pressable onPress={onRemove} style={styles.mediaRemove} hitSlop={4}>
-        <AppText variant="caption" color={THEME.colors.white} style={{ fontSize: 10 }}>✕</AppText>
+        <Ionicons name="close" size={12} color="#fff" />
       </Pressable>
     </Animated.View>
   );
@@ -480,7 +492,7 @@ function PickerField({ label, value, options, onChange, disabled }) {
           <AppText variant="label" color={value ? THEME.colors.text : THEME.colors.border}>
             {value || 'Select…'}
           </AppText>
-          <AppText variant="label" color={THEME.colors.muted}>▾</AppText>
+          <Ionicons name="chevron-down" size={18} color="#5A585A" />
         </View>
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -501,7 +513,7 @@ function PickerField({ label, value, options, onChange, disabled }) {
                   <AppText variant="label" color={opt === value ? THEME.colors.primary : THEME.colors.text}>
                     {opt}
                   </AppText>
-                  {opt === value && <AppText variant="label" color={THEME.colors.primary}>✓</AppText>}
+                  {opt === value && <Ionicons name="checkmark" size={18} color={THEME.colors.primary} />}
                 </Pressable>
               ))}
             </ScrollView>
@@ -558,9 +570,12 @@ function PillOption({ label, active, onPress }) {
 function TagsField({ tags, input, setInput, onCommit, onRemove }) {
   return (
     <View style={styles.field}>
-      <AppText variant="caption" color={THEME.colors.muted} style={styles.fieldLabel}>
-        {STRINGS.classifieds.labels.tags.toUpperCase()}
-      </AppText>
+      <View style={styles.fieldLabelRow}>
+        <Ionicons name="pricetag-outline" size={12} color="#5A585A" />
+        <AppText variant="caption" color={THEME.colors.muted} style={styles.fieldLabel}>
+          {STRINGS.classifieds.labels.tags.toUpperCase()}
+        </AppText>
+      </View>
       <View style={styles.tagsBox}>
         <View style={styles.tagsWrap}>
           {tags.map((t) => (
@@ -609,8 +624,8 @@ function TagChip({ value, onRemove }) {
   return (
     <Animated.View style={[styles.tagChip, style]}>
       <AppText variant="caption" style={{ fontSize: 12 }}>{value}</AppText>
-      <Pressable onPress={handleRemove} hitSlop={4}>
-        <AppText variant="caption" color={THEME.colors.muted}>  ✕</AppText>
+      <Pressable onPress={handleRemove} hitSlop={4} style={{ marginLeft: 4 }}>
+        <Ionicons name="close" size={12} color="#5A585A" />
       </Pressable>
     </Animated.View>
   );
@@ -645,9 +660,24 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   segOpt: {
+    flexDirection: 'row',
+    gap: 6,
     height: 40,
     borderRadius: 9,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fieldLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  headerBack: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ECEFEC',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -743,6 +773,9 @@ const styles = StyleSheet.create({
   },
 
   useLocBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingTop: 6,
   },
 
@@ -778,6 +811,9 @@ const styles = StyleSheet.create({
   },
 
   expiryBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     backgroundColor: 'rgba(251,190,36,0.1)',
     borderRadius: 12,
     borderWidth: 1,

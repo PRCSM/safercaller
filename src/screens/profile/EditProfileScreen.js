@@ -13,6 +13,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { PageWrapper } from '../../components/common/PageWrapper';
@@ -85,7 +86,7 @@ export default function EditProfileScreen({ navigation }) {
     const unsub = navigation.addListener('beforeRemove', (e) => {
       if (!dirty || saving) return;
       e.preventDefault();
-      Alert.alert('Unsaved changes', 'Discard changes and go back?', [
+      Alert.alert('⚠️ Unsaved changes', 'Discard changes and go back?', [
         { text: 'Stay', style: 'cancel' },
         { text: 'Discard', style: 'destructive', onPress: () => navigation.dispatch(e.data.action) },
       ]);
@@ -169,7 +170,7 @@ export default function EditProfileScreen({ navigation }) {
         >
           <View style={styles.topBar}>
             <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.backButton}>
-              <AppText variant="label">←</AppText>
+              <Ionicons name="arrow-back" size={22} color="#000" />
             </Pressable>
             <AppText variant="label" style={styles.topTitle}>Edit Profile</AppText>
             <Button
@@ -196,9 +197,12 @@ export default function EditProfileScreen({ navigation }) {
                 </View>
               </Pressable>
               <Pressable onPress={pickPhoto}>
-                <AppText variant="caption" color={THEME.colors.primary} style={styles.changePhoto}>
-                  Change Photo
-                </AppText>
+                <View style={styles.changePhotoRow}>
+                  <Ionicons name="camera-outline" size={14} color={THEME.colors.primary} />
+                  <AppText variant="caption" color={THEME.colors.primary} style={styles.changePhoto}>
+                    Change Photo
+                  </AppText>
+                </View>
               </Pressable>
             </View>
 
@@ -332,7 +336,7 @@ function FloatingDateField({ label, value, onChange }) {
           <AppText variant="label" color={value ? THEME.colors.text : 'transparent'}>
             {value || '—'}
           </AppText>
-          <AppText variant="label" color={THEME.colors.muted}>📅</AppText>
+          <Ionicons name="calendar-outline" size={18} color="#5A585A" />
         </View>
       </Pressable>
 
@@ -389,7 +393,7 @@ function PickerField({ label, value, options, onChange }) {
           <AppText variant="label" color={value ? THEME.colors.text : 'transparent'}>
             {value || '—'}
           </AppText>
-          <AppText variant="label" color={THEME.colors.muted}>▾</AppText>
+          <Ionicons name="chevron-down" size={18} color="#5A585A" />
         </View>
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -406,7 +410,7 @@ function PickerField({ label, value, options, onChange }) {
                   <AppText variant="label" color={opt === value ? THEME.colors.primary : THEME.colors.text}>
                     {opt}
                   </AppText>
-                  {opt === value && <AppText variant="label" color={THEME.colors.primary}>✓</AppText>}
+                  {opt === value && <Ionicons name="checkmark" size={18} color={THEME.colors.primary} />}
                 </Pressable>
               ))}
             </ScrollView>
@@ -448,7 +452,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   photoInitials: { fontSize: 28 },
-  changePhoto: { marginTop: 4 },
+  changePhoto: {},
+  changePhotoRow: {
+    marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
 
   field: { position: 'relative' },
   fieldLabel: {

@@ -10,6 +10,7 @@ import {
   FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PageWrapper } from '../../components/common/PageWrapper';
 import { AppText } from '../../components/common/AppText';
@@ -115,7 +116,7 @@ export default function SettingsScreen({ navigation }) {
       <PageWrapper>
         <View style={styles.topBar}>
           <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.backButton}>
-            <AppText variant="label">←</AppText>
+            <Ionicons name="arrow-back" size={22} color="#000" />
           </Pressable>
           <AppText variant="label" style={styles.topTitle}>Settings</AppText>
           <View style={{ width: 40 }} />
@@ -124,18 +125,22 @@ export default function SettingsScreen({ navigation }) {
         <ScrollView contentContainerStyle={styles.scroll}>
           <Section label="CALL PROTECTION">
             <ToggleRow
+              iconName="shield-checkmark-outline"
+              iconColor={THEME.colors.primary}
               label="Scam Block"
               sub="Auto-block flagged numbers"
               value={scamBlockEnabled}
               onChange={() => { haptics.light(); toggleScamBlock(); }}
             />
             <ToggleRow
+              iconName="ban-outline"
               label="Spam Block"
               sub="Block known spam callers"
               value={spamBlockEnabled}
               onChange={() => { haptics.light(); toggleSpamBlock(); }}
             />
             <ToggleRow
+              iconName="hardware-chip-outline"
               label="AI Receptionist"
               sub="Auto-answer unknown calls"
               value={receptionistMode}
@@ -145,16 +150,19 @@ export default function SettingsScreen({ navigation }) {
 
           <Section label="PRIVACY">
             <ToggleRow
+              iconName="eye-outline"
               label="Go Online"
               sub="Show profile in People Search"
               value={goOnlineLocal}
               onChange={onToggleGoOnline}
             />
             <Row
+              iconName="lock-closed-outline"
               label="Profile Visibility"
               onPress={() => toast.info('Profile visibility settings coming soon')}
             />
             <Row
+              iconName="ban-outline"
               label="Blocked Users"
               right={
                 <AppText variant="caption" color={THEME.colors.muted}>
@@ -190,18 +198,21 @@ export default function SettingsScreen({ navigation }) {
 
           <Section label="NOTIFICATIONS">
             <ToggleRow
+              iconName="notifications-outline"
               label="Scam Alerts"
               sub="Reports filed against contacts"
               value={notifPrefs.scamAlerts}
               onChange={(v) => updateNotifPref('scamAlerts', v)}
             />
             <ToggleRow
+              iconName="chatbubble-outline"
               label="Chat Messages"
               sub="Push notification on new message"
               value={notifPrefs.chatMessages}
               onChange={(v) => updateNotifPref('chatMessages', v)}
             />
             <ToggleRow
+              iconName="time-outline"
               label="Listing Expiry"
               sub="Heads-up before listings expire"
               value={notifPrefs.listingExpiry}
@@ -211,14 +222,18 @@ export default function SettingsScreen({ navigation }) {
 
           <Section label="ACCOUNT">
             <Row
+              iconName="call-outline"
               label="Change Phone Number"
               onPress={() => toast.info('Phone change coming soon')}
             />
             <Row
+              iconName="download-outline"
               label="Download My Data"
               onPress={() => toast.info('Feature coming soon')}
             />
             <Row
+              iconName="warning-outline"
+              iconColor={THEME.colors.coral}
               label="Delete Account"
               labelColor={THEME.colors.coral}
               onPress={onDeleteAccount}
@@ -227,12 +242,13 @@ export default function SettingsScreen({ navigation }) {
 
           <Section label="ABOUT">
             <Row
+              iconName="phone-portrait-outline"
               label="App Version"
               right={<AppText variant="caption" color={THEME.colors.muted}>{APP_VERSION}</AppText>}
             />
-            <Row label="Privacy Policy"   onPress={() => openExternal(PRIVACY_URL)} />
-            <Row label="Terms of Service" onPress={() => openExternal(TERMS_URL)} />
-            <Row label="Rate the App"     onPress={() => openExternal(STORE_URL)} />
+            <Row iconName="document-text-outline" label="Privacy Policy"   onPress={() => openExternal(PRIVACY_URL)} />
+            <Row iconName="document-outline" label="Terms of Service"      onPress={() => openExternal(TERMS_URL)} />
+            <Row iconName="star-outline" label="Rate the App"              onPress={() => openExternal(STORE_URL)} />
           </Section>
         </ScrollView>
       </PageWrapper>
@@ -253,9 +269,12 @@ function Section({ label, children }) {
   );
 }
 
-function Row({ label, sub, right, labelColor, onPress }) {
+function Row({ iconName, iconColor, label, sub, right, labelColor, onPress }) {
   const content = (
     <View style={styles.row}>
+      {iconName && (
+        <Ionicons name={iconName} size={20} color={iconColor ?? THEME.colors.muted} style={styles.rowIcon} />
+      )}
       <View style={{ flex: 1 }}>
         <AppText variant="label" color={labelColor ?? THEME.colors.text}>{label}</AppText>
         {!!sub && (
@@ -264,7 +283,7 @@ function Row({ label, sub, right, labelColor, onPress }) {
           </AppText>
         )}
       </View>
-      {right ?? (onPress && <AppText variant="label" color={THEME.colors.border}>›</AppText>)}
+      {right ?? (onPress && <Ionicons name="chevron-forward" size={18} color={THEME.colors.border} />)}
     </View>
   );
   if (!onPress) return content;
@@ -278,9 +297,12 @@ function Row({ label, sub, right, labelColor, onPress }) {
   );
 }
 
-function ToggleRow({ label, sub, value, onChange }) {
+function ToggleRow({ iconName, iconColor, label, sub, value, onChange }) {
   return (
     <View style={styles.row}>
+      {iconName && (
+        <Ionicons name={iconName} size={20} color={iconColor ?? THEME.colors.muted} style={styles.rowIcon} />
+      )}
       <View style={{ flex: 1 }}>
         <AppText variant="label">{label}</AppText>
         {!!sub && (
@@ -317,10 +339,11 @@ const styles = StyleSheet.create({
 
   scroll: { paddingBottom: 40 },
 
-  section: { marginTop: 24 },
+  section: { marginTop: 28 },
   sectionLabel: {
-    fontSize: 11,
-    letterSpacing: 0.5,
+    fontSize: 12,
+    letterSpacing: 1.5,
+    fontWeight: '500',
     paddingHorizontal: 16,
     marginBottom: 6,
   },
@@ -339,6 +362,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: THEME.colors.subtle,
     gap: 12,
+  },
+  rowIcon: {
+    width: 20,
+    textAlign: 'center',
   },
   rowSub: { fontSize: 12, marginTop: 2 },
 

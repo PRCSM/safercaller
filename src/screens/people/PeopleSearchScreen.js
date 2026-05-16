@@ -10,6 +10,7 @@ import {
   Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import Animated, {
   Easing,
@@ -171,7 +172,9 @@ export default function PeopleSearchScreen({ navigation }) {
             onPress={() => { haptics.light(); setPanelOpen((p) => !p); }}
             style={styles.filterBtn}
           >
-            <AppText variant="caption">Filters {panelOpen ? '▴' : '▾'}</AppText>
+            <Ionicons name="options-outline" size={14} color="#000" />
+            <AppText variant="caption">Filters</AppText>
+            <Ionicons name={panelOpen ? 'chevron-up' : 'chevron-down'} size={14} color="#000" />
           </Pressable>
           <ScrollView
             horizontal
@@ -218,8 +221,12 @@ export default function PeopleSearchScreen({ navigation }) {
           ListEmptyComponent={
             !isLoading && (
               <View style={styles.emptyWrap}>
-                <AppText variant="caption" color={THEME.colors.muted}>
-                  No people match these filters.
+                <Ionicons name="people-outline" size={48} color="#D1D6D2" style={styles.emptyEmoji} />
+                <AppText variant="label" style={styles.emptyTitle}>
+                  No people found
+                </AppText>
+                <AppText variant="caption" color={THEME.colors.muted} style={styles.emptySub}>
+                  Try adjusting your filters or search query.
                 </AppText>
               </View>
             )
@@ -393,7 +400,7 @@ function PickerField({ label, value, options, onChange }) {
         <AppText variant="label" color={value ? THEME.colors.text : THEME.colors.border}>
           {value || 'Any'}
         </AppText>
-        <AppText variant="label" color={THEME.colors.muted}>▾</AppText>
+        <Ionicons name="chevron-down" size={18} color="#5A585A" />
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -406,7 +413,7 @@ function PickerField({ label, value, options, onChange }) {
                 style={styles.modalOption}
               >
                 <AppText variant="label" color={THEME.colors.muted}>Any</AppText>
-                {!value && <AppText variant="label" color={THEME.colors.primary}>✓</AppText>}
+                {!value && <Ionicons name="checkmark" size={18} color={THEME.colors.primary} />}
               </Pressable>
               {options.map((opt) => (
                 <Pressable
@@ -417,7 +424,7 @@ function PickerField({ label, value, options, onChange }) {
                   <AppText variant="label" color={opt === value ? THEME.colors.primary : THEME.colors.text}>
                     {opt}
                   </AppText>
-                  {opt === value && <AppText variant="label" color={THEME.colors.primary}>✓</AppText>}
+                  {opt === value && <Ionicons name="checkmark" size={18} color={THEME.colors.primary} />}
                 </Pressable>
               ))}
             </ScrollView>
@@ -448,8 +455,8 @@ function ActiveChip({ label, onRemove }) {
       <AppText variant="caption" color={THEME.colors.white} style={{ fontSize: 11 }}>
         {label}
       </AppText>
-      <Pressable onPress={handleRemove} hitSlop={4}>
-        <AppText variant="caption" color={THEME.colors.white}>  ✕</AppText>
+      <Pressable onPress={handleRemove} hitSlop={4} style={{ marginLeft: 4 }}>
+        <Ionicons name="close" size={12} color="#fff" />
       </Pressable>
     </Animated.View>
   );
@@ -510,8 +517,9 @@ function PersonCard({ person, index, onChat, onCall, onPress }) {
             </AppText>
 
             <View style={styles.verifyChips}>
-              {verified.idProof && <VerifyChip label="✓ ID" />}
-              {verified.liveness && <VerifyChip label="✓ Liveness" />}
+              {verified.idProof && <VerifyChip iconName="card-outline" label="ID" />}
+              {verified.liveness && <VerifyChip iconName="videocam-outline" label="Liveness" />}
+              {verified.phone && <VerifyChip iconName="call-outline" label="Phone" />}
             </View>
           </View>
 
@@ -546,9 +554,12 @@ function PersonCard({ person, index, onChat, onCall, onPress }) {
 
         <View style={styles.cardActions}>
           {lowTrust ? (
-            <AppText variant="caption" color={THEME.colors.coral}>
-              🔴 Low trust score
-            </AppText>
+            <View style={styles.lowTrustRow}>
+              <Ionicons name="alert-circle" size={14} color={THEME.colors.coral} />
+              <AppText variant="caption" color={THEME.colors.coral}>
+                Low trust score
+              </AppText>
+            </View>
           ) : (
             <>
               <Button
@@ -557,6 +568,7 @@ function PersonCard({ person, index, onChat, onCall, onPress }) {
                 label="Chat"
                 onPress={onChat}
                 style={{ flex: 1 }}
+                leftIcon={<Ionicons name="chatbubble-outline" size={16} color="#fff" />}
               />
               <Button
                 variant="primary"
@@ -564,6 +576,7 @@ function PersonCard({ person, index, onChat, onCall, onPress }) {
                 label="Call"
                 onPress={onCall}
                 style={{ flex: 1 }}
+                leftIcon={<Ionicons name="call" size={16} color="#fff" />}
               />
             </>
           )}
@@ -573,9 +586,12 @@ function PersonCard({ person, index, onChat, onCall, onPress }) {
   );
 }
 
-function VerifyChip({ label }) {
+function VerifyChip({ iconName, label }) {
   return (
     <View style={styles.verifyChip}>
+      {iconName && (
+        <Ionicons name={iconName} size={11} color={THEME.colors.primary} style={{ marginRight: 3 }} />
+      )}
       <AppText variant="caption" style={{ fontSize: 9 }}>{label}</AppText>
     </View>
   );
@@ -617,12 +633,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     height: 36,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     borderRadius: 18,
     backgroundColor: THEME.colors.subtle,
-    alignItems: 'center',
     justifyContent: 'center',
+  },
+  lowTrustRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   activeChip: {
     flexDirection: 'row',
@@ -719,8 +742,10 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   verifyChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: THEME.colors.subtle,
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: THEME.borderRadius.pill,
   },
@@ -743,7 +768,21 @@ const styles = StyleSheet.create({
 
   emptyWrap: {
     alignItems: 'center',
-    paddingTop: THEME.spacing.huge,
+    paddingTop: 80,
+    gap: 8,
+  },
+  emptyEmoji: {
+    marginBottom: 8,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  emptySub: {
+    fontSize: 13,
+    textAlign: 'center',
+    paddingHorizontal: 32,
   },
 
   modalBackdrop: {

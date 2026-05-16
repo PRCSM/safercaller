@@ -1,13 +1,14 @@
 import { View, StyleSheet, Pressable, ScrollView, Image, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { PageWrapper } from '../../components/common/PageWrapper';
 import { AppText } from '../../components/common/AppText';
 import { THEME } from '../../constants/theme';
 
 const RISK_BADGE = {
-  open:      { label: 'HIGH RISK', bg: THEME.colors.coral,   fg: THEME.colors.white },
-  resolved:  { label: 'RESOLVED',  bg: THEME.colors.primary, fg: THEME.colors.white },
-  reviewing: { label: 'REVIEWING', bg: THEME.colors.warning, fg: THEME.colors.text },
+  open:      { label: 'HIGH RISK', bg: THEME.colors.coral,   fg: THEME.colors.white, iconName: 'alert-circle', iconColor: '#fff' },
+  resolved:  { label: 'RESOLVED',  bg: THEME.colors.primary, fg: THEME.colors.white, iconName: 'checkmark-circle', iconColor: '#fff' },
+  reviewing: { label: 'REVIEWING', bg: THEME.colors.warning, fg: THEME.colors.text,  iconName: 'time', iconColor: '#000' },
 };
 
 const formatDate = (ts) => {
@@ -43,7 +44,7 @@ export default function ScamDetailScreen({ navigation, route }) {
       <PageWrapper>
         <View style={styles.topBar}>
           <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.backButton}>
-            <AppText variant="label">←</AppText>
+            <Ionicons name="arrow-back" size={22} color="#000" />
           </Pressable>
           <AppText variant="label">Report Detail</AppText>
           <View style={{ width: 40 }} />
@@ -51,6 +52,7 @@ export default function ScamDetailScreen({ navigation, route }) {
 
         <ScrollView contentContainerStyle={styles.content}>
           <View style={[styles.riskBadge, { backgroundColor: badge.bg }]}>
+            <Ionicons name={badge.iconName} size={12} color={badge.iconColor} />
             <AppText variant="caption" color={badge.fg} style={styles.riskBadgeText}>
               {badge.label}
             </AppText>
@@ -158,7 +160,10 @@ const styles = StyleSheet.create({
 
   riskBadge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
   },

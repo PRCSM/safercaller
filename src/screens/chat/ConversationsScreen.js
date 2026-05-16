@@ -8,6 +8,7 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { PageWrapper } from '../../components/common/PageWrapper';
 import { AppText } from '../../components/common/AppText';
@@ -116,12 +117,12 @@ export default function ConversationsScreen({ navigation }) {
         <View style={styles.topBar}>
           <AppText variant="heading" style={styles.title}>Messages</AppText>
           <Pressable onPress={openCompose} hitSlop={6} style={styles.composeBtn}>
-            <AppText variant="label">✏️</AppText>
+            <Ionicons name="pencil-outline" size={20} color="#5A585A" />
           </Pressable>
         </View>
 
         <View style={styles.searchWrap}>
-          <AppText variant="label" color={THEME.colors.muted} style={{ marginRight: 8 }}>🔍</AppText>
+          <Ionicons name="search" size={18} color="#5A585A" style={{ marginRight: 8 }} />
           <TextInput
             value={filter}
             onChangeText={setFilter}
@@ -131,7 +132,7 @@ export default function ConversationsScreen({ navigation }) {
           />
           {filter.length > 0 && (
             <Pressable hitSlop={6} onPress={() => setFilter('')}>
-              <AppText variant="caption" color={THEME.colors.muted}>✕</AppText>
+              <Ionicons name="close-circle" size={16} color="#5A585A" />
             </Pressable>
           )}
         </View>
@@ -160,7 +161,7 @@ export default function ConversationsScreen({ navigation }) {
             )}
             ListEmptyComponent={
               <View style={styles.emptyWrap}>
-                <AppText variant="label" style={styles.emptyIcon}>💬</AppText>
+                <Ionicons name="chatbubbles-outline" size={56} color="#D1D6D2" style={styles.emptyIcon} />
                 <AppText variant="label" style={styles.emptyTitle}>No conversations yet</AppText>
                 <AppText variant="caption" color={THEME.colors.muted} style={styles.emptyHint}>
                   Search for people to start chatting.
@@ -189,7 +190,6 @@ function ConversationRow({ row, myUid, onPress }) {
     : '';
   const lastBySelf = row.lastSenderId === myUid;
   const previewRaw = row.lastMessage ?? '';
-  const preview = lastBySelf ? `You: ${previewRaw}` : previewRaw;
   // No per-user unread counter on chat doc yet. Heuristic: dot if the
   // other user sent the most recent message.
   const isUnread = !lastBySelf && !!row.lastMessage;
@@ -220,7 +220,8 @@ function ConversationRow({ row, myUid, onPress }) {
           numberOfLines={1}
           style={styles.rowPreview}
         >
-          {preview || 'No messages yet'}
+          {lastBySelf && <AppText variant="caption" style={styles.selfPrefix}>You: </AppText>}
+          {previewRaw || 'No messages yet'}
         </AppText>
       </View>
 
@@ -316,7 +317,11 @@ const styles = StyleSheet.create({
     paddingTop: 80,
     gap: 8,
   },
-  emptyIcon: { fontSize: 36 },
+  emptyIcon: { marginBottom: 4 },
+  selfPrefix: {
+    fontStyle: 'italic',
+    color: THEME.colors.muted,
+  },
   emptyTitle: { fontSize: 16, fontWeight: '600', marginTop: 6 },
   emptyHint: { textAlign: 'center', paddingHorizontal: 40 },
   emptyCta: { marginTop: 16, alignSelf: 'center', minWidth: 200 },

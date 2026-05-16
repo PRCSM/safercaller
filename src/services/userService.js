@@ -27,8 +27,26 @@ const userRef = (uid) => doc(db, 'users', uid);
 
 export const createUserProfile = async (uid, data) => {
   try {
+    // AUDIT FIX: check if a profile already exists — if it does, return it
+    // rather than overwriting. Re-running the onboarding flow (e.g. user
+    // signs in again after an interrupted setup) should not nuke their
+    // reputation score, listings, or admin grants.
+    const existing = await getDoc(userRef(uid));
+    if (existing.exists()) {
+      return { uid, ...existing.data() };
+    }
+
+    // AUDIT FIX: ensure required default fields are always set on first
+    // creation, regardless of what the caller passes.
     const payload = {
       uid,
+      name: data?.name ?? null,
+      phone: data?.phone ?? null,
+      status: 'active',
+      reputationScore: 1000,
+      goOnline: true,
+      isPremium: false,
+      verified: { liveness: false, idProof: false, thumbprint: false },
       ...data,
       createdAt: serverTimestamp(),
     };
@@ -67,7 +85,11 @@ export const uploadProfilePhoto = async (uid, uri) => {
     // uploadBytesResumable so we can surface progress to the UI.
     const response = await fetch(uri);
     const blob = await response.blob();
-    const photoRef = ref(storage, `profilePhotos/${uid}.jpg`);
+    // AUDIT FIX: match storage.rules `profilePhotos/{uid}/{fileName}` —
+    // the rule requires uid as a folder, not as the filename root. The
+    // old path `profilePhotos/${uid}.jpg` got permission-denied because
+    // it didn't fit the path matcher.
+    const photoRef = ref(storage, `profilePhotos/${uid}/avatar.jpg`);
     await uploadBytes(photoRef, blob);
     const url = await getDownloadURL(photoRef);
     // Persist the URL on the profile doc so reads don't need a separate

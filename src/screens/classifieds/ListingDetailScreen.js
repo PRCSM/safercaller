@@ -11,6 +11,7 @@ import {
   Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { PageWrapper } from '../../components/common/PageWrapper';
 import { AppText } from '../../components/common/AppText';
@@ -228,10 +229,10 @@ export default function ListingDetailScreen({ navigation, route }) {
 
           <View style={styles.topBarFloating}>
             <Pressable onPress={() => navigation.goBack()} style={styles.iconButton} hitSlop={8}>
-              <AppText variant="label" color={THEME.colors.white}>←</AppText>
+              <Ionicons name="arrow-back" size={22} color="#fff" />
             </Pressable>
             <Pressable onPress={onShare} style={styles.iconButton} hitSlop={8}>
-              <AppText variant="label" color={THEME.colors.white}>↗</AppText>
+              <Ionicons name="share-outline" size={20} color="#fff" />
             </Pressable>
           </View>
 
@@ -253,7 +254,8 @@ export default function ListingDetailScreen({ navigation, route }) {
 
             {!!listing.location && (
               <View style={styles.locationRow}>
-                <AppText variant="caption" color={THEME.colors.muted}>📍 {listing.location}</AppText>
+                <Ionicons name="location-outline" size={14} color="#5A585A" />
+                <AppText variant="caption" color={THEME.colors.muted}>{listing.location}</AppText>
               </View>
             )}
 
@@ -279,9 +281,12 @@ export default function ListingDetailScreen({ navigation, route }) {
 
             <View style={styles.divider} />
 
-            <AppText variant="caption" color={THEME.colors.muted} style={styles.sellerLabel}>
-              POSTED BY
-            </AppText>
+            <View style={styles.sellerLabelRow}>
+              <Ionicons name="person-outline" size={12} color="#5A585A" />
+              <AppText variant="caption" color={THEME.colors.muted} style={styles.sellerLabel}>
+                POSTED BY
+              </AppText>
+            </View>
             <Pressable
               onPress={() => seller?.uid && navigation.getParent()?.getParent()?.navigate('PeopleStack', {
                 screen: 'ProfileView',
@@ -314,9 +319,12 @@ export default function ListingDetailScreen({ navigation, route }) {
 
             <View style={styles.metaRow}>
               {createdAt && (
-                <AppText variant="caption" color={THEME.colors.muted}>
-                  Listed {formatDistanceToNowStrict(createdAt)} ago
-                </AppText>
+                <View style={styles.metaCluster}>
+                  <Ionicons name="calendar-outline" size={12} color="#5A585A" />
+                  <AppText variant="caption" color={THEME.colors.muted}>
+                    Listed {formatDistanceToNowStrict(createdAt)} ago
+                  </AppText>
+                </View>
               )}
               {expiresAt && (
                 <AppText variant="caption" color={THEME.colors.muted}>
@@ -335,6 +343,7 @@ export default function ListingDetailScreen({ navigation, route }) {
                 label="Call Seller"
                 onPress={onCallSeller}
                 style={styles.bottomBtn}
+                leftIcon={<Ionicons name="call" size={18} color="#fff" />}
               />
             )}
             {showChat && (
@@ -343,6 +352,7 @@ export default function ListingDetailScreen({ navigation, route }) {
                 label="Chat"
                 onPress={onChatSeller}
                 style={styles.bottomBtn}
+                leftIcon={<Ionicons name="chatbubble-outline" size={18} color="#fff" />}
               />
             )}
           </View>
@@ -466,7 +476,9 @@ const styles = StyleSheet.create({
     borderRadius: 35,
   },
   conditionText: { fontSize: 12 },
-  locationRow: { marginTop: 4 },
+  locationRow: { marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  sellerLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  metaCluster: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 
   divider: { height: 1, backgroundColor: THEME.colors.border, marginVertical: 12 },
 

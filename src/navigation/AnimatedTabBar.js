@@ -12,6 +12,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '../constants/theme';
 import { AppText } from '../components/common/AppText';
 import { haptics } from '../constants/animations';
@@ -50,11 +51,11 @@ const ICON_SCALE_SPRING = { damping: 18, stiffness: 200 };
 const LABEL_SPRING = { damping: 20, stiffness: 220 };
 
 const TAB_ICONS = {
-  DialerTab:   '☎',
-  RecentsTab:  '↻',
-  ScamTab:     '!',
-  ListingsTab: '◫',
-  MoreTab:     '≡',
+  DialerTab:   'keypad',
+  RecentsTab:  'time-outline',
+  ScamTab:     'shield-outline',
+  ListingsTab: 'grid-outline',
+  MoreTab:     'menu-outline',
 };
 
 export function AnimatedTabBar({ state, descriptors, navigation }) {
@@ -163,18 +164,13 @@ function TabItem({ routeName, label, isFocused, onPress, badge }) {
     opacity: pressOpacity.value,
   }));
 
-  const iconColorStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(
-      focusProgress.value,
-      [0, 1],
-      [THEME.colors.muted, THEME.colors.primary]
-    ),
-  }));
-
   const labelStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: labelY.value }],
     opacity: labelOpacity.value,
   }));
+
+  const iconName = TAB_ICONS[routeName] ?? 'ellipse-outline';
+  const iconColor = isFocused ? THEME.colors.primary : THEME.colors.muted;
 
   return (
     <Pressable
@@ -185,9 +181,7 @@ function TabItem({ routeName, label, isFocused, onPress, badge }) {
       accessibilityLabel={label}
     >
       <Animated.View style={iconTransformStyle}>
-        <Animated.Text style={[styles.icon, iconColorStyle]}>
-          {TAB_ICONS[routeName] ?? '•'}
-        </Animated.Text>
+        <Ionicons name={iconName} size={24} color={iconColor} />
       </Animated.View>
 
       <Animated.View style={labelStyle}>

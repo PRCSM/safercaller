@@ -110,17 +110,17 @@ export default function SplashScreen({ navigation }) {
         <Animated.View style={[styles.logoGroup, logoGroupStyle]}>
           <View style={styles.wordmarkRow}>
             <Animated.View style={saferStyle}>
-              <AppText variant="display">{STRINGS.app.nameSplit.left}</AppText>
+              <AppText variant="display" style={styles.wordmark}>{STRINGS.app.nameSplit.left}</AppText>
             </Animated.View>
             <Animated.View style={callerStyle}>
-              <AppText variant="display" color={THEME.colors.primary}>
+              <AppText variant="display" color={THEME.colors.primary} style={styles.wordmark}>
                 {STRINGS.app.nameSplit.right}
               </AppText>
             </Animated.View>
           </View>
 
           <Animated.View style={taglineStyle}>
-            <AppText variant="caption" color={THEME.colors.muted}>
+            <AppText variant="caption" color={THEME.colors.muted} style={styles.tagline}>
               {STRINGS.app.tagline}
             </AppText>
           </Animated.View>
@@ -172,6 +172,14 @@ const styles = StyleSheet.create({
   wordmarkRow: {
     flexDirection: 'row',
   },
+  wordmark: {
+    fontSize: 52,
+    lineHeight: 56,
+  },
+  tagline: {
+    fontSize: 14,
+    letterSpacing: 0.5,
+  },
   line: {
     height: 2,
     backgroundColor: THEME.colors.primary,
@@ -188,8 +196,10 @@ const styles = StyleSheet.create({
   languageCard: {
     backgroundColor: THEME.colors.surface,
     borderRadius: THEME.borderRadius.lg,
-    padding: THEME.spacing.xxl,
+    padding: THEME.spacing.xxxl,
     gap: THEME.spacing.md,
+    borderWidth: 1,
+    borderColor: THEME.colors.subtle,
   },
   langPill: {
     height: THEME.sizes.buttonHeight,

@@ -22,7 +22,19 @@ export const useAuthStore = create(
 
       setUser: (user) =>
         set((s) => {
-          s.user = user;
+          // Extract a plain serializable object so the RN-Firebase user
+          // class instance is never stored in the immer draft (its
+          // toJSON is deprecated and noisy on serialization).
+          s.user = user
+            ? {
+                uid:         user.uid,
+                phoneNumber: user.phoneNumber ?? null,
+                email:       user.email ?? null,
+                displayName: user.displayName ?? null,
+                photoURL:    user.photoURL ?? null,
+                isAnonymous: user.isAnonymous ?? false,
+              }
+            : null;
           s.isAuthenticated = !!user;
         }),
 

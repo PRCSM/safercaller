@@ -10,6 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { formatDistanceToNowStrict, isToday, isYesterday, format } from 'date-fns';
 import Animated, {
@@ -165,7 +166,7 @@ export default function CallLogsScreen({ navigation }) {
         <View style={styles.header}>
           <AppText variant="heading">{STRINGS.callLogs.title}</AppText>
           <Pressable style={styles.filterIcon} hitSlop={8} onPress={() => toast.info('Filters coming soon')}>
-            <AppText variant="label">⋮</AppText>
+            <Ionicons name="ellipsis-vertical" size={20} color="#5A585A" />
           </Pressable>
         </View>
 
@@ -351,10 +352,10 @@ function LogRow({ log, index, onPress, onLongPress }) {
           </AppText>
         </View>
         <View style={styles.rowBody}>
-          <AppText variant="label" numberOfLines={1}>
+          <AppText variant="label" numberOfLines={1} style={styles.rowName}>
             {log.name ?? log.number}
           </AppText>
-          <AppText variant="caption" color={statusColor} numberOfLines={1}>
+          <AppText variant="caption" color={statusColor} numberOfLines={1} style={styles.rowSub}>
             {subline}
           </AppText>
         </View>
@@ -364,32 +365,34 @@ function LogRow({ log, index, onPress, onLongPress }) {
   );
 }
 
-function StatusEnd({ log, statusColor }) {
+function StatusEnd({ log }) {
   if (log.status === 'flagged' || log.status === 'scamBlocked') {
     return (
-      <View style={[styles.statusPill, { backgroundColor: 'rgba(255,90,77,0.1)' }]}>
-        <AppText variant="caption" color={THEME.colors.coral}>🔴 Flagged</AppText>
+      <View style={[styles.statusPill, styles.statusPillRow, { backgroundColor: 'rgba(255,90,77,0.1)' }]}>
+        <Ionicons name="flag" size={11} color={THEME.colors.coral} />
+        <AppText variant="caption" color={THEME.colors.coral}>Flagged</AppText>
       </View>
     );
   }
   if (log.status === 'safe') {
     return (
-      <View style={[styles.statusPill, { backgroundColor: 'rgba(0,102,255,0.1)' }]}>
-        <AppText variant="caption" color={THEME.colors.primary}>🟢 Safe</AppText>
+      <View style={[styles.statusPill, styles.statusPillRow, { backgroundColor: 'rgba(0,102,255,0.1)' }]}>
+        <Ionicons name="shield-checkmark" size={11} color={THEME.colors.primary} />
+        <AppText variant="caption" color={THEME.colors.primary}>Safe</AppText>
       </View>
     );
   }
   if (log.status === 'missed') {
     return (
       <View style={styles.callBackBtn}>
-        <AppText variant="label">📞</AppText>
+        <Ionicons name="call" size={18} color="#5A585A" />
       </View>
     );
   }
   if (log.status === 'receptionist') {
     return (
       <View style={styles.callBackBtn}>
-        <AppText variant="label">▶</AppText>
+        <Ionicons name="play" size={16} color="#5A585A" />
       </View>
     );
   }
@@ -481,8 +484,9 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   sectionText: {
-    fontSize: 10,
-    letterSpacing: 0.5,
+    fontSize: 12,
+    letterSpacing: 1.5,
+    fontWeight: '500',
   },
 
   swipeRoot: {
@@ -502,7 +506,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: THEME.colors.background,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: THEME.colors.subtle,
@@ -514,13 +518,27 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: THEME.colors.white,
   },
   rowBody: { flex: 1, gap: 2 },
+  rowName: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  rowSub: {
+    fontSize: 12,
+  },
 
   statusPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: THEME.borderRadius.pill,
+  },
+  statusPillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   callBackBtn: {
     width: THEME.sizes.iconButton,

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Pressable, ScrollView, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as LocalAuthentication from 'expo-local-authentication';
 import Animated, {
@@ -26,9 +27,9 @@ import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../utils/toast';
 
 const CARDS = [
-  { id: 'liveness',   glyph: '🎥', title: 'Liveness Video', sub: 'Record 10 seconds saying your name.' },
-  { id: 'idProof',    glyph: '🪪', title: 'ID Proof',       sub: 'Show government ID in camera.' },
-  { id: 'thumbprint', glyph: '👆', title: 'Thumbprint',     sub: 'Biometric scan for login.' },
+  { id: 'liveness',   iconName: 'videocam-outline',     title: 'Liveness Video', sub: 'Record 10 seconds saying your name.' },
+  { id: 'idProof',    iconName: 'card-outline',         title: 'ID Proof',       sub: 'Show government ID in camera.' },
+  { id: 'thumbprint', iconName: 'finger-print-outline', title: 'Thumbprint',     sub: 'Biometric scan for login.' },
 ];
 
 const LIVENESS_SECONDS = 10;
@@ -152,11 +153,23 @@ export default function VerificationScreen({ navigation, route }) {
     setSubmitting(true);
     try {
       let profilePhotoUrl = null;
+      // AUDIT FIX: photo upload is non-blocking — if it fails (network,
+      // permissions, etc.), continue creating the profile without it.
+      // The user can add a photo later via EditProfile.
       if (profileData?.photoUri && user?.uid) {
-        profilePhotoUrl = await userService.uploadProfilePhoto(user.uid, profileData.photoUri);
+        try {
+          profilePhotoUrl = await userService.uploadProfilePhoto(user.uid, profileData.photoUri);
+        } catch (photoErr) {
+          console.warn('[Verification] photo upload failed, continuing without it:', photoErr?.code);
+          toast.warning('Photo upload failed', 'You can add it later from Settings.');
+        }
       }
+      // AUDIT FIX: ensure phone (with country code) is set on the profile
+      // — userService.createUserProfile fills in defaults but we want the
+      // authoritative phone to be the one from RNFirebase Auth.
       const payload = {
         ...(profileData ?? {}),
+        phone: user?.phoneNumber ?? profileData?.phone ?? null,
         profilePhoto: profilePhotoUrl,
         verified,
       };
@@ -187,7 +200,7 @@ export default function VerificationScreen({ navigation, route }) {
           <View style={styles.topBar}>
             <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
               <View style={styles.backButton}>
-                <AppText variant="label">←</AppText>
+                <Ionicons name="arrow-back" size={22} color="#000" />
               </View>
             </Pressable>
           </View>
@@ -201,7 +214,7 @@ export default function VerificationScreen({ navigation, route }) {
             {CARDS.map((card) => (
               <VerifyCard
                 key={card.id}
-                glyph={card.glyph}
+                iconName={card.iconName}
                 title={card.title}
                 sub={card.sub}
                 status={statuses[card.id]}
@@ -212,8 +225,9 @@ export default function VerificationScreen({ navigation, route }) {
           </View>
 
           <View style={styles.infoBox}>
-            <AppText variant="caption" color={THEME.colors.muted}>
-              🔒 {STRINGS.verification.encryptedNote}
+            <Ionicons name="lock-closed-outline" size={16} color="#5A585A" style={styles.infoIcon} />
+            <AppText variant="caption" color={THEME.colors.muted} style={{ flex: 1 }}>
+              {STRINGS.verification.encryptedNote}
             </AppText>
           </View>
         </ScrollView>
@@ -225,7 +239,7 @@ export default function VerificationScreen({ navigation, route }) {
             onPress={onDone}
           />
           <Pressable onPress={onSkip} style={styles.skipPress} hitSlop={8} disabled={submitting}>
-            <AppText variant="caption" color={THEME.colors.muted}>
+            <AppText variant="label" color={THEME.colors.muted} style={styles.skipText}>
               {STRINGS.verification.skipForNow ?? 'Skip for now →'}
             </AppText>
           </Pressable>
@@ -243,7 +257,7 @@ export default function VerificationScreen({ navigation, route }) {
 
 /* ─────────────────────────────  Card  ───────────────────────────── */
 
-function VerifyCard({ glyph, title, sub, status, onStart, registerBounce }) {
+function VerifyCard({ iconName, title, sub, status, onStart, registerBounce }) {
   const borderProgress = useSharedValue(0);     // 0=pending, 1=active, 2=done
   const checkScale = useSharedValue(0);
   const cardBounceScale = useSharedValue(1);
@@ -324,20 +338,21 @@ function VerifyCard({ glyph, title, sub, status, onStart, registerBounce }) {
     <Animated.View style={[styles.card, cardStyle]}>
       <View style={styles.cardRow}>
         <View style={styles.cardIcon}>
-          <AppText variant="heading">{glyph}</AppText>
+          <Ionicons name={iconName} size={24} color="#5A585A" />
         </View>
         <View style={{ flex: 1 }}>
-          <AppText variant="label">{title}</AppText>
-          <AppText variant="caption" color={THEME.colors.muted}>{sub}</AppText>
+          <AppText variant="label" style={styles.cardTitle}>{title}</AppText>
+          <AppText variant="caption" color={THEME.colors.muted} style={styles.cardSub}>{sub}</AppText>
         </View>
         {status === 'pending' ? (
           <Pressable onPress={onStart} style={styles.startButton}>
-            <AppText variant="caption" color={THEME.colors.white}>Start →</AppText>
+            <Ionicons name={iconName} size={14} color="#fff" style={{ marginRight: 4 }} />
+            <AppText variant="caption" color={THEME.colors.white}>Start</AppText>
           </Pressable>
         ) : (
           <View style={styles.checkmarkWrap}>
             <Animated.View style={checkStyle}>
-              <AppText variant="heading" color={THEME.colors.success}>✓</AppText>
+              <Ionicons name="checkmark-circle" size={26} color="#22C55E" />
             </Animated.View>
           </View>
         )}
@@ -494,13 +509,13 @@ const styles = StyleSheet.create({
   },
   cardList: {
     marginTop: THEME.spacing.md,
-    gap: THEME.spacing.md,
+    gap: 20,
   },
   card: {
     backgroundColor: THEME.colors.surface,
     borderRadius: THEME.borderRadius.lg,
     borderWidth: 1,
-    padding: THEME.spacing.lg,
+    padding: 24,
     overflow: 'visible',
   },
   cardRow: {
@@ -509,20 +524,31 @@ const styles = StyleSheet.create({
     gap: THEME.spacing.md,
   },
   cardIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: THEME.colors.subtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cardSub: {
+    fontSize: 13,
+  },
   startButton: {
+    flexDirection: 'row',
     height: 36,
     paddingHorizontal: 14,
     borderRadius: 18,
     backgroundColor: THEME.colors.dark,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  infoIcon: {
+    marginRight: 8,
   },
   checkmarkWrap: {
     width: 36,
@@ -558,6 +584,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: THEME.colors.border,
+    borderLeftWidth: 3,
+    borderLeftColor: THEME.colors.primary,
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
@@ -577,6 +605,9 @@ const styles = StyleSheet.create({
   skipPress: {
     alignSelf: 'center',
     paddingVertical: THEME.spacing.sm,
+  },
+  skipText: {
+    textDecorationLine: 'underline',
   },
 
   /* Liveness modal */

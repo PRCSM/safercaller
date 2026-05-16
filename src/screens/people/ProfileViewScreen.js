@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { PageWrapper } from '../../components/common/PageWrapper';
 import { AppText } from '../../components/common/AppText';
 import { Button } from '../../components/common/Button';
@@ -149,7 +150,7 @@ export default function ProfileViewScreen({ navigation, route }) {
           </View>
 
           <Pressable onPress={() => navigation.goBack()} style={styles.backFloating} hitSlop={8}>
-            <AppText variant="label" color={THEME.colors.white}>←</AppText>
+            <Ionicons name="arrow-back" size={22} color="#fff" />
           </Pressable>
 
           <View style={styles.avatarWrap}>
@@ -166,7 +167,8 @@ export default function ProfileViewScreen({ navigation, route }) {
 
           {isOffline && (
             <View style={styles.offlineBanner}>
-              <AppText variant="caption" color={THEME.colors.text}>
+              <Ionicons name="eye-off-outline" size={14} color="#000" />
+              <AppText variant="caption" color={THEME.colors.text} style={{ marginLeft: 6 }}>
                 This user is not discoverable.
               </AppText>
             </View>
@@ -181,18 +183,24 @@ export default function ProfileViewScreen({ navigation, route }) {
               </AppText>
             )}
             {!!profile.location && (
-              <AppText variant="caption" color={THEME.colors.muted}>📍 {profile.location}</AppText>
+              <View style={styles.locationRow}>
+                <Ionicons name="location-outline" size={14} color="#5A585A" />
+                <AppText variant="caption" color={THEME.colors.muted}>{profile.location}</AppText>
+              </View>
             )}
 
             <View style={styles.chipRow}>
-              <Chip label="✓ Phone" />
-              {profile.verified?.idProof  && <Chip label="✓ ID" />}
-              {profile.verified?.liveness && <Chip label="✓ Liveness" />}
+              <Chip iconName="call-outline" label="Phone" />
+              {profile.verified?.idProof  && <Chip iconName="card-outline" label="ID" />}
+              {profile.verified?.liveness && <Chip iconName="videocam-outline" label="Liveness" />}
             </View>
 
             <View style={styles.scoreCard}>
               <View style={{ flex: 1 }}>
-                <AppText variant="caption" color={THEME.colors.muted}>Trust Score</AppText>
+                <View style={styles.trustLabel}>
+                  <Ionicons name="star" size={12} color="#FBE74E" />
+                  <AppText variant="caption" color={THEME.colors.muted}>Trust Score</AppText>
+                </View>
                 <AppText variant="heading" style={styles.scoreNumber}>
                   {profile.reputationScore ?? 900}
                 </AppText>
@@ -209,7 +217,10 @@ export default function ProfileViewScreen({ navigation, route }) {
 
             <View style={styles.divider} />
 
-            <AppText variant="label" style={styles.sectionLabel}>Listings by this user</AppText>
+            <View style={styles.sectionLabelRow}>
+              <Ionicons name="storefront-outline" size={16} color="#000" />
+              <AppText variant="label" style={styles.sectionLabel}>Listings by this user</AppText>
+            </View>
             {listings.length === 0 ? (
               <AppText variant="caption" color={THEME.colors.muted} style={{ marginTop: 8 }}>
                 No active listings.
@@ -255,8 +266,20 @@ export default function ProfileViewScreen({ navigation, route }) {
 
         {userId !== myUid && (
           <View style={styles.bottomBar}>
-            <Button variant="secondary" label="Chat" onPress={onChat} style={styles.bottomBtn} />
-            <Button variant="primary"   label="Call" onPress={onCall} style={styles.bottomBtn} />
+            <Button
+              variant="secondary"
+              label="Chat"
+              onPress={onChat}
+              style={styles.bottomBtn}
+              leftIcon={<Ionicons name="chatbubble-outline" size={18} color="#fff" />}
+            />
+            <Button
+              variant="primary"
+              label="Call"
+              onPress={onCall}
+              style={styles.bottomBtn}
+              leftIcon={<Ionicons name="call" size={18} color="#fff" />}
+            />
           </View>
         )}
       </PageWrapper>
@@ -264,9 +287,12 @@ export default function ProfileViewScreen({ navigation, route }) {
   );
 }
 
-function Chip({ label }) {
+function Chip({ iconName, label }) {
   return (
     <View style={styles.chip}>
+      {iconName && (
+        <Ionicons name={iconName} size={12} color={THEME.colors.primary} style={{ marginRight: 4 }} />
+      )}
       <AppText variant="caption" style={styles.chipText}>{label}</AppText>
     </View>
   );
@@ -304,6 +330,8 @@ const styles = StyleSheet.create({
   avatarInitials: { fontSize: 26, fontWeight: '600' },
 
   offlineBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'rgba(251,231,78,0.25)',
     paddingVertical: 8,
     paddingHorizontal: 20,
@@ -318,12 +346,17 @@ const styles = StyleSheet.create({
 
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: THEME.colors.subtle,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 35,
   },
   chipText: { fontSize: 10 },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  trustLabel: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  sectionLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
 
   scoreCard: {
     marginTop: 16,

@@ -9,6 +9,7 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   Easing,
   cancelAnimation,
@@ -35,14 +36,25 @@ import { haptics, springs } from '../../constants/animations';
 import { toast } from '../../utils/toast';
 
 const CATEGORIES = [
-  { id: 'all',         label: STRINGS.classifieds.chips.all },
-  { id: 'Plumbing',    label: 'Plumbing' },
-  { id: 'Electrical',  label: 'Electrical' },
-  { id: 'Tutoring',    label: 'Tutoring' },
-  { id: 'Vehicles',    label: 'Vehicles' },
-  { id: 'Electronics', label: 'Electronics' },
-  { id: 'Furniture',   label: 'Furniture' },
+  { id: 'all',         label: STRINGS.classifieds.chips.all, iconName: 'storefront-outline' },
+  { id: 'Plumbing',    label: 'Plumbing',    iconName: 'construct-outline' },
+  { id: 'Electrical',  label: 'Electrical',  iconName: 'flash-outline' },
+  { id: 'Tutoring',    label: 'Tutoring',    iconName: 'book-outline' },
+  { id: 'Vehicles',    label: 'Vehicles',    iconName: 'car-outline' },
+  { id: 'Electronics', label: 'Electronics', iconName: 'phone-portrait-outline' },
+  { id: 'Furniture',   label: 'Furniture',   iconName: 'bed-outline' },
+  { id: 'Food',        label: 'Food',        iconName: 'fast-food-outline' },
 ];
+
+const CATEGORY_ICON = {
+  Plumbing:    'construct-outline',
+  Electrical:  'flash-outline',
+  Tutoring:    'book-outline',
+  Vehicles:    'car-outline',
+  Electronics: 'phone-portrait-outline',
+  Furniture:   'bed-outline',
+  Food:        'fast-food-outline',
+};
 
 const PLACEHOLDER_BG = [
   THEME.colors.accentBlue,
@@ -184,6 +196,7 @@ export default function ClassifiedsFeedScreen({ navigation }) {
             <CategoryChip
               key={c.id}
               label={c.label}
+              iconName={c.iconName}
               index={i}
               active={activeCategory === c.id}
               onPress={() => onCategoryPress(c.id)}
@@ -192,9 +205,12 @@ export default function ClassifiedsFeedScreen({ navigation }) {
         </ScrollView>
 
         <View style={styles.locationRow}>
-          <AppText variant="caption" style={styles.nearLabel}>
-            {STRINGS.classifieds.nearYou} — {location}
-          </AppText>
+          <View style={styles.nearLabelRow}>
+            <Ionicons name="location-outline" size={14} color="#000" />
+            <AppText variant="caption" style={styles.nearLabel}>
+              {STRINGS.classifieds.nearYou} — {location}
+            </AppText>
+          </View>
           <Pressable onPress={() => toast.info('Change location coming soon')} hitSlop={6}>
             <AppText variant="caption" color={THEME.colors.primary}>
               {STRINGS.common.change}
@@ -323,7 +339,7 @@ function SearchBar({ value, onChange, focused, setFocused, isRecording, onMicPre
 
   return (
     <Animated.View style={[styles.searchBar, barStyle]}>
-      <AppText variant="label" color={THEME.colors.muted} style={{ marginRight: 8 }}>🔍</AppText>
+      <Ionicons name="search" size={20} color="#5A585A" style={{ marginRight: 8 }} />
       <TextInput
         value={value}
         onChangeText={onChange}
@@ -341,7 +357,7 @@ function SearchBar({ value, onChange, focused, setFocused, isRecording, onMicPre
             pointerEvents="none"
           />
           <View style={[styles.mic, { backgroundColor: micBg }]}>
-            <AppText variant="caption" color={THEME.colors.white}>🎤</AppText>
+            <Ionicons name="mic" size={16} color="#fff" />
           </View>
         </View>
       </Pressable>
@@ -351,7 +367,7 @@ function SearchBar({ value, onChange, focused, setFocused, isRecording, onMicPre
 
 /* ─────────────────────────────  Category chip with right-stagger  ───────────────────────────── */
 
-function CategoryChip({ label, index, active, onPress }) {
+function CategoryChip({ label, iconName, index, active, onPress }) {
   const enterX = useSharedValue(40);
   const enterOpacity = useSharedValue(0);
   const colorProgress = useSharedValue(active ? 1 : 0);
@@ -384,6 +400,11 @@ function CategoryChip({ label, index, active, onPress }) {
   return (
     <Pressable onPress={onPress}>
       <Animated.View style={[styles.chip, chipStyle]}>
+        <Ionicons
+          name={iconName}
+          size={14}
+          color={active ? THEME.colors.white : THEME.colors.text}
+        />
         <AppText variant="caption" color={active ? THEME.colors.white : THEME.colors.text}>
           {label}
         </AppText>
@@ -422,9 +443,11 @@ function ListingCard({ item, index, scrollY, bgColor, onPress }) {
     : { label: item.condition ?? 'New', bg: THEME.colors.warning, fg: THEME.colors.text };
 
   const safety =
-    item.sellerScore > 500 ? { label: '🟢 Safe',    bg: 'rgba(0,102,255,0.1)',  fg: THEME.colors.primary }
-    : item.sellerScore < 200 ? { label: '🔴 Flagged', bg: 'rgba(255,90,77,0.1)',  fg: THEME.colors.coral }
-    : null;
+    item.sellerScore > 500
+      ? { label: 'Safe', bg: 'rgba(0,102,255,0.1)', fg: THEME.colors.primary, iconName: 'shield-checkmark', iconColor: THEME.colors.primary }
+      : item.sellerScore < 200
+        ? { label: 'Flagged', bg: 'rgba(255,90,77,0.1)', fg: THEME.colors.coral, iconName: 'alert-circle', iconColor: THEME.colors.coral }
+        : null;
 
   return (
     <Pressable onPress={onPress}>
@@ -434,9 +457,11 @@ function ListingCard({ item, index, scrollY, bgColor, onPress }) {
             {item.mediaUrls?.[0] ? (
               <Image source={{ uri: item.mediaUrls[0] }} style={StyleSheet.absoluteFill} />
             ) : (
-              <AppText variant="caption" color={THEME.colors.muted}>
-                {item.category}
-              </AppText>
+              <Ionicons
+                name={CATEGORY_ICON[item.category] ?? 'cube-outline'}
+                size={48}
+                color="rgba(0,0,0,0.45)"
+              />
             )}
           </Animated.View>
 
@@ -448,7 +473,8 @@ function ListingCard({ item, index, scrollY, bgColor, onPress }) {
 
           {!!item.rating && (
             <View style={styles.ratingPill}>
-              <AppText variant="caption" style={styles.tinyText}>⭐ {item.rating}</AppText>
+              <Ionicons name="star" size={11} color="#FBE74E" />
+              <AppText variant="caption" style={styles.tinyText}>{item.rating}</AppText>
             </View>
           )}
         </View>
@@ -473,6 +499,7 @@ function ListingCard({ item, index, scrollY, bgColor, onPress }) {
             </AppText>
             {safety && (
               <View style={[styles.safetyPill, { backgroundColor: safety.bg }]}>
+                <Ionicons name={safety.iconName} size={11} color={safety.iconColor} />
                 <AppText variant="caption" color={safety.fg} style={styles.tinyText}>
                   {safety.label}
                 </AppText>
@@ -540,11 +567,18 @@ const styles = StyleSheet.create({
     gap: THEME.spacing.sm,
   },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     height: 34,
     paddingHorizontal: 14,
     borderRadius: 17,
-    alignItems: 'center',
     justifyContent: 'center',
+  },
+  nearLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
 
   locationRow: {
@@ -603,6 +637,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: THEME.borderRadius.pill,
@@ -630,6 +667,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   safetyPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: THEME.borderRadius.pill,

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { View, StyleSheet, Pressable, ScrollView, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
-import { getHours } from 'date-fns';
+import { getHours, formatDistanceToNowStrict } from 'date-fns';
 import Animated, {
   Easing,
   FadeIn,
@@ -57,6 +58,9 @@ export default function DialerScreen({ navigation }) {
   const deleteDigit = useDialerStore((s) => s.deleteDigit);
   const clearNumber = useDialerStore((s) => s.clearNumber);
   const addCallLog = useDialerStore((s) => s.addCallLog);
+  // Direct setter access to fill number from a recent-chip tap without
+  // typing each digit.
+  const setCurrentNumberRaw = useDialerStore.setState;
 
   const score = profile?.reputationScore ?? 0;
   const firstName = (profile?.name ?? '').split(' ')[0];
@@ -64,6 +68,8 @@ export default function DialerScreen({ navigation }) {
   const spamBlockedToday = callLogs.filter(
     (l) => l.status === 'flagged' || l.status === 'scamBlocked'
   ).length;
+  const missedCount = callLogs.filter((l) => l.status === 'missed').length;
+  const recentCalls = callLogs.slice(0, 5);
 
   const handleDigit = (digit) => addDigit(digit);
   const handleBackspace = () => deleteDigit();
@@ -73,7 +79,11 @@ export default function DialerScreen({ navigation }) {
   };
 
   const handleCallPress = async () => {
-    if (!currentNumber) return;
+    if (!currentNumber) {
+      toast.warning('Enter a number first');
+      haptics.error();
+      return;
+    }
     try {
       const lookup = await scamService.lookupNumber(currentNumber);
       addCallLog({
@@ -98,6 +108,17 @@ export default function DialerScreen({ navigation }) {
     }
   };
 
+  const handleRecentChipPress = (log) => {
+    haptics.light();
+    setCurrentNumberRaw({ currentNumber: log.number ?? '' });
+  };
+
+  const openRecents = () => {
+    haptics.light();
+    navigation.getParent()?.navigate('RecentsTab')
+      ?? toast.info('Switch to Recents tab to see all calls');
+  };
+
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <PageWrapper>
@@ -106,31 +127,62 @@ export default function DialerScreen({ navigation }) {
           <View style={styles.topBar}>
             <AppText variant="body" style={styles.brand}>{STRINGS.app.name}</AppText>
             <View style={styles.topActions}>
-              <IconButton glyph="🔍" />
-              <IconButton glyph="🔔" />
+              <Pressable onPress={() => toast.info('Search coming soon')} style={styles.iconButton} hitSlop={6}>
+                <Ionicons name="search" size={20} color="#5A585A" />
+              </Pressable>
+              <Pressable
+                onPress={() => toast.info('Notifications coming soon')}
+                style={styles.iconButton}
+                hitSlop={6}
+              >
+                <Ionicons name="notifications-outline" size={20} color="#5A585A" />
+                {missedCount > 0 && <View style={styles.bellBadge} />}
+              </Pressable>
             </View>
           </View>
 
+          {/* Trust score card */}
+          <TrustScoreCard score={score} verified={profile?.verified} />
+
           {/* Greeting */}
-          <View>
-            <AppText variant="body">
-              {greeting}{firstName ? `  ${firstName}` : ''}
+          <View style={styles.greetingWrap}>
+            <AppText variant="body" style={styles.greeting}>
+              {greeting}{firstName ? `  ${firstName}` : ''} 👋
             </AppText>
-            <AppText variant="caption" color={THEME.colors.primary}>
+            <AppText
+              variant="caption"
+              color={spamBlockedToday > 0 ? THEME.colors.primary : THEME.colors.muted}
+              style={styles.greetingSub}
+            >
               {spamBlockedToday > 0
                 ? STRINGS.dialer.blockedToday(spamBlockedToday)
                 : 'No spam blocked today'}
             </AppText>
           </View>
 
-          {/* Trust score card */}
-          <TrustScoreCard score={score} verified={profile?.verified} />
+          {/* Recent calls strip */}
+          {recentCalls.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.recentRow}
+            >
+              {recentCalls.map((log) => (
+                <RecentChip
+                  key={log.id}
+                  log={log}
+                  active={currentNumber && log.number === currentNumber}
+                  onPress={() => handleRecentChipPress(log)}
+                />
+              ))}
+            </ScrollView>
+          )}
 
           {/* Number display */}
           <View style={styles.numberRow}>
             {currentNumber.length === 0 ? (
-              <AppText variant="display" color={THEME.colors.border}>
-                {STRINGS.dialer.numberPlaceholder}
+              <AppText style={styles.numberPlaceholder}>
+                Enter number…
               </AppText>
             ) : (
               currentNumber.split('').map((char, i) => (
@@ -139,7 +191,7 @@ export default function DialerScreen({ navigation }) {
                   entering={FadeIn.duration(100)}
                   exiting={FadeOut.duration(80)}
                 >
-                  <AppText variant="display">{char}</AppText>
+                  <AppText style={styles.numberChar}>{char}</AppText>
                 </Animated.View>
               ))
             )}
@@ -161,15 +213,17 @@ export default function DialerScreen({ navigation }) {
             ))}
           </View>
 
-          {/* Call button row */}
+          {/* Call action row */}
           <View style={styles.callRow}>
-            <View style={styles.callPlaceholder} />
-            <CallButton onPress={handleCallPress} />
             <BackspaceButton
               onPress={handleBackspace}
               onLongPress={handleBackspaceLong}
-              disabled={currentNumber.length === 0}
+              visible={currentNumber.length > 0}
             />
+            <CallButton onPress={handleCallPress} />
+            <Pressable onPress={openRecents} style={styles.recentsButton} hitSlop={6}>
+              <Ionicons name="time-outline" size={22} color="#5A585A" />
+            </Pressable>
           </View>
         </ScrollView>
       </PageWrapper>
@@ -177,27 +231,32 @@ export default function DialerScreen({ navigation }) {
   );
 }
 
-/* ─────────────────────────────  Icon button (top bar)  ───────────────────────────── */
+/* ─────────────────────────────  Recent-calls chip  ───────────────────────────── */
 
-function IconButton({ glyph, onPress }) {
-  const scale = useSharedValue(1);
+function RecentChip({ log, active, onPress }) {
+  const direction = log.status === 'missed'
+    ? 'missed'
+    : log.direction ?? 'outbound';
+
+  const iconProps =
+    direction === 'missed'
+      ? { name: 'call-outline', color: '#FF5A4D' }
+      : direction === 'inbound'
+        ? { name: 'arrow-down-circle', color: '#22C55E' }
+        : { name: 'arrow-up-circle', color: '#0066FF' };
+
+  const display = (log.name ?? log.number ?? '').slice(0, 10);
+
   return (
     <Pressable
-      onPressIn={() => {
-        scale.value = withSpring(0.9, { damping: 15, stiffness: 300 });
-        haptics.light();
-      }}
-      onPressOut={() => { scale.value = withSpring(1, springs.default); }}
       onPress={onPress}
+      style={[styles.recentChip, active && styles.recentChipActive]}
+      hitSlop={6}
     >
-      <Animated.View
-        style={[
-          styles.iconButton,
-          useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] })),
-        ]}
-      >
-        <AppText variant="label">{glyph}</AppText>
-      </Animated.View>
+      <Ionicons name={iconProps.name} size={16} color={iconProps.color} />
+      <AppText variant="caption" style={styles.recentChipText}>
+        {display || 'Unknown'}
+      </AppText>
     </Pressable>
   );
 }
@@ -206,17 +265,11 @@ function IconButton({ glyph, onPress }) {
 
 function DialKey({ digit, sub, onPress }) {
   const scale = useSharedValue(1);
-  const rippleScale = useSharedValue(0.5);
-  const rippleOpacity = useSharedValue(0);
   const bgDarken = useSharedValue(0);
 
   const handlePressIn = () => {
     scale.value = withSpring(0.88, { damping: 15, stiffness: 320 });
     bgDarken.value = withTiming(1, { duration: 100 });
-    rippleScale.value = 0.5;
-    rippleOpacity.value = 0.2;
-    rippleScale.value = withTiming(1.6, { duration: 400, easing: Easing.out(Easing.cubic) });
-    rippleOpacity.value = withTiming(0, { duration: 400 });
     haptics.light();
   };
 
@@ -227,12 +280,10 @@ function DialKey({ digit, sub, onPress }) {
 
   const buttonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    backgroundColor: bgDarken.value > 0.5 ? THEME.colors.border : THEME.colors.surface,
+    backgroundColor: bgDarken.value > 0.5 ? THEME.colors.subtle : THEME.colors.white,
   }));
-  const rippleStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: rippleScale.value }],
-    opacity: rippleOpacity.value,
-  }));
+
+  const isSpecial = digit === '*' || digit === '#';
 
   return (
     <Pressable
@@ -242,19 +293,18 @@ function DialKey({ digit, sub, onPress }) {
       style={styles.keyHit}
     >
       <Animated.View style={[styles.key, buttonStyle]}>
-        <Animated.View style={[styles.keyRipple, rippleStyle]} pointerEvents="none" />
-        <AppText variant="heading">{digit}</AppText>
+        <AppText style={[styles.keyDigit, isSpecial && styles.keyDigitSpecial]}>
+          {digit === '*' ? '✱' : digit}
+        </AppText>
         {!!sub && (
-          <AppText variant="caption" color={THEME.colors.muted} style={styles.keySub}>
-            {sub}
-          </AppText>
+          <AppText style={styles.keySub}>{sub}</AppText>
         )}
       </Animated.View>
     </Pressable>
   );
 }
 
-/* ─────────────────────────────  Call button (pulse ring)  ───────────────────────────── */
+/* ─────────────────────────────  Call button (pulse ring + glow)  ───────────────────────────── */
 
 function CallButton({ onPress }) {
   const ringProgress = useSharedValue(0);
@@ -262,7 +312,7 @@ function CallButton({ onPress }) {
 
   useEffect(() => {
     ringProgress.value = withRepeat(
-      withTiming(1, { duration: 1800, easing: Easing.out(Easing.cubic) }),
+      withTiming(1, { duration: 2000, easing: Easing.out(Easing.cubic) }),
       -1,
       false
     );
@@ -270,8 +320,8 @@ function CallButton({ onPress }) {
   }, [ringProgress]);
 
   const ringStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + ringProgress.value * 0.3 }],
-    opacity: 0.4 * (1 - ringProgress.value),
+    transform: [{ scale: 1 + ringProgress.value * 0.4 }],
+    opacity: 0.3 * (1 - ringProgress.value),
   }));
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ scale: btnScale.value }],
@@ -289,7 +339,7 @@ function CallButton({ onPress }) {
       <View style={styles.callButtonWrap}>
         <Animated.View style={[styles.callPulseRing, ringStyle]} pointerEvents="none" />
         <Animated.View style={[styles.callButton, btnStyle]}>
-          <AppText variant="heading" color={THEME.colors.white}>📞</AppText>
+          <Ionicons name="call" size={32} color="#fff" />
         </Animated.View>
       </View>
     </Pressable>
@@ -298,31 +348,43 @@ function CallButton({ onPress }) {
 
 /* ─────────────────────────────  Backspace  ───────────────────────────── */
 
-function BackspaceButton({ onPress, onLongPress, disabled }) {
+function BackspaceButton({ onPress, onLongPress, visible }) {
   const scale = useSharedValue(1);
+  const opacity = useSharedValue(visible ? 1 : 0);
+
+  useEffect(() => {
+    opacity.value = withTiming(visible ? 1 : 0, { duration: 180 });
+  }, [visible, opacity]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
   return (
-    <Pressable
+    <AnimatedPressableShim
       onPressIn={() => {
-        if (disabled) return;
+        if (!visible) return;
         scale.value = withSpring(0.88, { damping: 15, stiffness: 320 });
       }}
       onPressOut={() => { scale.value = withSpring(1, springs.default); }}
-      onPress={() => { if (!disabled) onPress(); }}
-      onLongPress={() => { if (!disabled) onLongPress(); }}
+      onPress={() => { if (visible) onPress(); }}
+      onLongPress={() => { if (visible) onLongPress(); }}
       delayLongPress={500}
       style={styles.backspaceHit}
+      disabled={!visible}
     >
-      <Animated.View
-        style={[
-          styles.backspace,
-          { opacity: disabled ? 0.3 : 1 },
-          useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] })),
-        ]}
-      >
-        <AppText variant="label">⌫</AppText>
+      <Animated.View style={[styles.backspace, animStyle]}>
+        <Ionicons name="backspace-outline" size={24} color="#5A585A" />
       </Animated.View>
-    </Pressable>
+    </AnimatedPressableShim>
   );
+}
+
+// Tiny shim so the pressable disables hit-testing when the button is
+// fully transparent (otherwise users could tap an invisible target).
+function AnimatedPressableShim({ disabled, ...rest }) {
+  return <Pressable {...rest} disabled={disabled} pointerEvents={disabled ? 'none' : 'auto'} />;
 }
 
 /* ─────────────────────────────  Trust score card + donut  ───────────────────────────── */
@@ -360,52 +422,63 @@ function TrustScoreCard({ score, verified }) {
     strokeDashoffset: DONUT_CIRC * (1 - progress.value),
   }));
 
+  const tier =
+    score >= 700 ? 'Good' :
+    score >= 400 ? 'Fair' : 'Low';
+
   return (
     <View style={styles.scoreCard}>
       <View style={styles.scoreCardTop}>
         <View style={{ flex: 1 }}>
-          <AppText variant="caption" color={THEME.colors.muted}>
-            {STRINGS.dialer.trustScoreLabel}
+          <AppText style={styles.scoreLabel}>
+            YOUR TRUST SCORE
           </AppText>
-          <AppText variant="display" style={styles.scoreNumber}>{displayed}</AppText>
-        </View>
-        <Svg width={DONUT_SIZE} height={DONUT_SIZE}>
-          <Circle
-            cx={DONUT_SIZE / 2}
-            cy={DONUT_SIZE / 2}
-            r={DONUT_RADIUS}
-            stroke={THEME.colors.subtle}
-            strokeWidth={DONUT_STROKE}
-            fill="none"
-          />
-          <AnimatedCircle
-            cx={DONUT_SIZE / 2}
-            cy={DONUT_SIZE / 2}
-            r={DONUT_RADIUS}
-            stroke={THEME.colors.primary}
-            strokeWidth={DONUT_STROKE}
-            fill="none"
-            strokeDasharray={DONUT_CIRC}
-            strokeLinecap="round"
-            animatedProps={animatedProps}
-            transform={`rotate(-90 ${DONUT_SIZE / 2} ${DONUT_SIZE / 2})`}
-          />
-        </Svg>
-      </View>
+          <AppText style={styles.scoreNumber}>{displayed}</AppText>
 
-      <View style={styles.chipRow}>
-        {verified?.idProof && <Chip label={STRINGS.dialer.chips.idVerified} />}
-        {verified?.liveness && <Chip label={STRINGS.dialer.chips.liveness} />}
-        <Chip label={STRINGS.dialer.chips.phone} />
+          <View style={styles.chipRow}>
+            <VerifyChip label="Phone" />
+            {verified?.idProof && <VerifyChip label="ID" />}
+            {verified?.liveness && <VerifyChip label="Liveness" />}
+          </View>
+        </View>
+
+        <View style={styles.donutWrap}>
+          <Svg width={DONUT_SIZE} height={DONUT_SIZE}>
+            <Circle
+              cx={DONUT_SIZE / 2}
+              cy={DONUT_SIZE / 2}
+              r={DONUT_RADIUS}
+              stroke={THEME.colors.subtle}
+              strokeWidth={DONUT_STROKE}
+              fill="none"
+            />
+            <AnimatedCircle
+              cx={DONUT_SIZE / 2}
+              cy={DONUT_SIZE / 2}
+              r={DONUT_RADIUS}
+              stroke={THEME.colors.primary}
+              strokeWidth={DONUT_STROKE}
+              fill="none"
+              strokeDasharray={DONUT_CIRC}
+              strokeLinecap="round"
+              animatedProps={animatedProps}
+              transform={`rotate(-90 ${DONUT_SIZE / 2} ${DONUT_SIZE / 2})`}
+            />
+          </Svg>
+          <View style={styles.donutCenter} pointerEvents="none">
+            <AppText style={styles.donutTier}>{tier}</AppText>
+          </View>
+        </View>
       </View>
     </View>
   );
 }
 
-function Chip({ label }) {
+function VerifyChip({ label }) {
   return (
     <View style={styles.chip}>
-      <AppText variant="caption" style={styles.chipText}>{label}</AppText>
+      <Ionicons name="checkmark-circle" size={12} color="#22C55E" />
+      <AppText style={styles.chipText}>{label}</AppText>
     </View>
   );
 }
@@ -415,143 +488,265 @@ function Chip({ label }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: THEME.colors.background },
   content: {
-    paddingHorizontal: THEME.spacing.lg,
-    paddingBottom: THEME.spacing.xxxl,
-    gap: THEME.spacing.lg,
+    paddingBottom: 24,
   },
+
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 16,
     paddingTop: THEME.spacing.sm,
   },
   brand: {
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
   },
   topActions: {
     flexDirection: 'row',
-    gap: THEME.spacing.sm,
+    gap: 8,
   },
   iconButton: {
-    width: THEME.sizes.iconButton,
-    height: THEME.sizes.iconButton,
-    borderRadius: THEME.borderRadius.full,
-    backgroundColor: THEME.colors.subtle,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ECEFEC',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  bellBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF5A4D',
+  },
 
   scoreCard: {
-    backgroundColor: THEME.colors.surface,
-    borderRadius: THEME.borderRadius.lg,
+    marginHorizontal: 16,
+    marginTop: 16,
+    backgroundColor: '#F9FAF9',
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: THEME.colors.border,
-    padding: THEME.spacing.xl,
-    gap: THEME.spacing.md,
+    borderColor: '#D1D6D2',
+    padding: 20,
   },
   scoreCardTop: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: THEME.spacing.md,
   },
+  scoreLabel: {
+    fontSize: 10,
+    fontWeight: '500',
+    letterSpacing: 1.5,
+    color: '#5A585A',
+    textTransform: 'uppercase',
+  },
   scoreNumber: {
-    fontSize: 36,
+    fontSize: 40,
+    fontFamily: THEME.typography.fontFamily.semibold,
+    color: '#000',
+    marginTop: 4,
   },
   chipRow: {
     flexDirection: 'row',
-    gap: THEME.spacing.sm,
+    gap: 6,
     flexWrap: 'wrap',
+    marginTop: 8,
   },
   chip: {
-    backgroundColor: THEME.colors.subtle,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(34,197,94,0.12)',
     borderRadius: THEME.borderRadius.pill,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   chipText: {
-    fontSize: 10,
+    fontSize: 11,
+    fontFamily: THEME.typography.fontFamily.medium,
+    color: '#000',
+  },
+  donutWrap: {
+    width: DONUT_SIZE,
+    height: DONUT_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  donutCenter: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  donutTier: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#000',
+    fontFamily: THEME.typography.fontFamily.semibold,
+  },
+
+  greetingWrap: {
+    paddingHorizontal: 16,
+    marginTop: 12,
+  },
+  greeting: {
+    fontSize: 16,
+    fontWeight: '500',
+    fontFamily: THEME.typography.fontFamily.medium,
+  },
+  greetingSub: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+
+  recentRow: {
+    paddingHorizontal: 16,
+    marginTop: 12,
+    gap: 8,
+  },
+  recentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 36,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+    backgroundColor: '#F9FAF9',
+    borderWidth: 1,
+    borderColor: '#D1D6D2',
+  },
+  recentChipActive: {
+    borderColor: THEME.colors.primary,
+    backgroundColor: 'rgba(0,102,255,0.08)',
+  },
+  recentChipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    fontFamily: THEME.typography.fontFamily.medium,
+    color: '#000',
   },
 
   numberRow: {
     flexDirection: 'row',
-    height: 48,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'center',
     flexWrap: 'wrap',
+    marginHorizontal: 16,
+    marginTop: 16,
+  },
+  numberChar: {
+    fontSize: 36,
+    fontFamily: THEME.typography.fontFamily.semibold,
+    color: '#000',
+    letterSpacing: 2,
+  },
+  numberPlaceholder: {
+    fontSize: 28,
+    color: '#D1D6D2',
+    fontFamily: THEME.typography.fontFamily.medium,
   },
 
   dialPad: {
-    gap: THEME.spacing.md,
+    marginHorizontal: 12,
+    marginTop: 8,
+    gap: 8,
   },
   padRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    gap: 8,
   },
   keyHit: {
-    width: 72,
-    height: 72,
+    width: 76,
+    height: 76,
   },
   key: {
     flex: 1,
-    borderRadius: 36,
+    borderRadius: 38,
     borderWidth: 1,
-    borderColor: THEME.colors.border,
+    borderColor: '#ECEFEC',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  keyRipple: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    backgroundColor: THEME.colors.primary,
-    borderRadius: 36,
+  keyDigit: {
+    fontSize: 28,
+    fontFamily: THEME.typography.fontFamily.semibold,
+    color: '#000',
+  },
+  keyDigitSpecial: {
+    fontSize: 22,
+    fontWeight: '300',
   },
   keySub: {
     fontSize: 9,
-    lineHeight: 11,
-    marginTop: 2,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: '#5A585A',
+    marginTop: 1,
+    fontFamily: THEME.typography.fontFamily.medium,
   },
 
   callRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: THEME.spacing.md,
-  },
-  callPlaceholder: {
-    width: THEME.sizes.iconButton,
-    height: THEME.sizes.iconButton,
+    marginHorizontal: 16,
+    marginTop: 16,
   },
   callButtonWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 96,
-    height: 96,
+    width: 112,
+    height: 112,
   },
   callButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: THEME.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: THEME.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
   callPulseRing: {
     position: 'absolute',
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: THEME.colors.primary,
   },
   backspaceHit: {
-    width: THEME.sizes.iconButton,
-    height: THEME.sizes.iconButton,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   backspace: {
-    flex: 1,
-    borderRadius: THEME.borderRadius.full,
-    backgroundColor: THEME.colors.subtle,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recentsButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#ECEFEC',
     alignItems: 'center',
     justifyContent: 'center',
   },

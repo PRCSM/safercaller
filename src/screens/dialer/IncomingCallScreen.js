@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { View, StyleSheet, Dimensions, Pressable, Switch } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   Easing,
   cancelAnimation,
@@ -250,7 +251,7 @@ export default function IncomingCallScreen({ navigation, route }) {
           <Animated.View pointerEvents="none" style={[styles.flagOverlay, flagOverlayStyle]} />
         )}
 
-        <AppText variant="caption" color={THEME.colors.muted} style={styles.topLabel}>
+        <AppText variant="caption" color={THEME.colors.muted} style={[styles.topLabel, styles.topLabelText]}>
           {STRINGS.incomingCall.incomingCall}
         </AppText>
 
@@ -267,7 +268,7 @@ export default function IncomingCallScreen({ navigation, route }) {
           </View>
         </View>
 
-        <AppText variant="heading" color={THEME.colors.white} style={styles.number}>
+        <AppText variant="heading" color={THEME.colors.white} style={[styles.number, styles.numberText]}>
           {phoneNumber}
         </AppText>
         <AppText variant="caption" color={THEME.colors.muted}>
@@ -323,7 +324,7 @@ export default function IncomingCallScreen({ navigation, route }) {
               label={STRINGS.incomingCall.block}
               bg="rgba(255,90,77,0.2)"
               borderColor={THEME.colors.coral}
-              glyph="⊘"
+              iconName="ban-outline"
               onPress={onBlock}
             />
           </Animated.View>
@@ -331,7 +332,7 @@ export default function IncomingCallScreen({ navigation, route }) {
             <ActionButton
               label={STRINGS.incomingCall.decline}
               bg={THEME.colors.coral}
-              glyph="✕"
+              iconName="close"
               big
               onPress={onDecline}
             />
@@ -340,7 +341,7 @@ export default function IncomingCallScreen({ navigation, route }) {
             <ActionButton
               label={STRINGS.incomingCall.answer}
               bg={THEME.colors.primary}
-              glyph="📞"
+              iconName="call"
               big
               onPress={onAnswer}
             />
@@ -357,7 +358,7 @@ export default function IncomingCallScreen({ navigation, route }) {
 
 /* ─────────────────────────────  Action button  ───────────────────────────── */
 
-function ActionButton({ label, bg, borderColor, glyph, big, onPress }) {
+function ActionButton({ label, bg, borderColor, iconName, big, onPress }) {
   const scale = useSharedValue(1);
   return (
     <Pressable
@@ -376,7 +377,7 @@ function ActionButton({ label, bg, borderColor, glyph, big, onPress }) {
           useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] })),
         ]}
       >
-        <AppText variant="heading" color={THEME.colors.white}>{glyph}</AppText>
+        <Ionicons name={iconName} size={big ? 30 : 24} color="#fff" />
       </Animated.View>
       <AppText variant="caption" color={THEME.colors.white} style={{ marginTop: 6 }}>
         {label}
@@ -401,25 +402,33 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.colors.coral,
   },
   topLabel: { marginBottom: THEME.spacing.md },
+  topLabelText: {
+    fontSize: 12,
+    letterSpacing: 3,
+  },
 
   avatarWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 96,
-    height: 96,
+    width: 104,
+    height: 104,
   },
   avatarRing: {
     position: 'absolute',
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 104,
+    height: 104,
+    borderRadius: 52,
   },
   avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 104,
+    height: 104,
+    borderRadius: 52,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  numberText: {
+    fontSize: 28,
+    fontWeight: '600',
   },
   initials: {
     fontSize: 32,
@@ -476,25 +485,26 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     width: '100%',
     marginTop: THEME.spacing.xl,
-    gap: THEME.spacing.lg,
+    gap: 28,
   },
   bigCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   smallCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   hint: {
     marginTop: THEME.spacing.xl,
+    marginBottom: 40,
   },
 });

@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   Easing,
   cancelAnimation,
@@ -30,6 +31,8 @@ import { toast } from '../../utils/toast';
 const BOX_COUNT = 6;
 const COUNTDOWN_SECONDS = 60;
 const WRONG_DEMO_CODE = '000000'; // type this to demo the shake locally
+// AUDIT FIX: after 3 wrong attempts, force user to request a new OTP.
+const MAX_ATTEMPTS = 3;
 
 /**
  * Step 2.5 — 6-digit OTP confirmation.
@@ -56,6 +59,7 @@ export default function OTPScreen({ navigation, route }) {
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [status, setStatus] = useState('default'); // 'default' | 'verifying' | 'wrong' | 'correct'
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
+  const [attempts, setAttempts] = useState(0); // AUDIT FIX: track wrong attempts
 
   // Auto-focus first box.
   useEffect(() => {
@@ -114,8 +118,16 @@ export default function OTPScreen({ navigation, route }) {
         navigation.navigate('ProfileSetup', { phone });
       }, 300);
     } catch (err) {
+      // AUDIT FIX: count failed attempts; after 3, bounce back to Signup.
+      const nextAttempts = attempts + 1;
+      setAttempts(nextAttempts);
       setStatus('wrong');
       haptics.error();
+      if (nextAttempts >= MAX_ATTEMPTS) {
+        toast.error('Too many attempts', 'Request a new OTP.');
+        setTimeout(() => navigation.popToTop(), 800);
+        return;
+      }
       toast.error(err?.message ?? 'Could not verify OTP');
       setTimeout(() => {
         setDigits(Array(BOX_COUNT).fill(''));
@@ -129,8 +141,11 @@ export default function OTPScreen({ navigation, route }) {
     if (countdown > 0) return;
     try {
       haptics.light();
+      // signUpWithPhone refreshes the cached confirmation in authService —
+      // verifyOTP picks up the new one automatically.
       await authService.signUpWithPhone(phone);
       setCountdown(COUNTDOWN_SECONDS);
+      setAttempts(0); // AUDIT FIX: reset attempt counter on resend
       toast.success('OTP resent', `Sent to ${phone}`);
     } catch (err) {
       toast.error('Could not resend', err?.message ?? '');
@@ -150,7 +165,7 @@ export default function OTPScreen({ navigation, route }) {
           <View style={styles.topBar}>
             <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
               <View style={styles.backButton}>
-                <AppText variant="label">←</AppText>
+                <Ionicons name="arrow-back" size={22} color="#000" />
               </View>
             </Pressable>
           </View>
@@ -330,7 +345,8 @@ const styles = StyleSheet.create({
     gap: THEME.spacing.md,
   },
   heading: {
-    fontSize: 48,
+    fontSize: 52,
+    lineHeight: 56,
   },
   sentToRow: {
     flexDirection: 'row',
@@ -339,12 +355,13 @@ const styles = StyleSheet.create({
   },
   boxRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 12,
     marginTop: THEME.spacing.huge,
   },
   boxWrap: {
-    width: 48,
-    height: 56,
+    width: 52,
+    height: 60,
     borderWidth: 2,
     borderRadius: 12,
     backgroundColor: THEME.colors.surface,
@@ -362,10 +379,11 @@ const styles = StyleSheet.create({
   },
   resend: {
     textAlign: 'center',
-    marginTop: THEME.spacing.xl,
+    marginTop: 24,
   },
   actions: {
     paddingHorizontal: THEME.spacing.lg,
     paddingBottom: THEME.spacing.lg,
+    marginTop: 40,
   },
 });

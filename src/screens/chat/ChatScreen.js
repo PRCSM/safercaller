@@ -12,6 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { formatDistanceToNowStrict } from 'date-fns';
@@ -263,26 +264,35 @@ function TopBar({ name, score, verified, onBack, onCall, onKebab }) {
   const isVerified = verified?.liveness && verified?.idProof;
   return (
     <View style={styles.topBar}>
-      <Pressable onPress={onBack} hitSlop={10}>
-        <AppText variant="heading">←</AppText>
+      <Pressable onPress={onBack} hitSlop={10} style={styles.topBack}>
+        <Ionicons name="arrow-back" size={22} color="#000" />
       </Pressable>
       <View style={{ flex: 1, marginLeft: 12 }}>
         <View style={styles.nameRow}>
-          <AppText variant="label" numberOfLines={1}>{name}</AppText>
+          <AppText variant="label" numberOfLines={1} style={styles.topName}>{name}</AppText>
           <View style={styles.onlineDot} />
           <AppText variant="caption" color={THEME.colors.primary} style={{ fontSize: 11 }}>
             Online
           </AppText>
         </View>
-        <AppText variant="caption" color={THEME.colors.muted} style={{ fontSize: 11 }}>
-          Score {score}{isVerified ? ' · ✓ Verified' : ''}
-        </AppText>
+        <View style={styles.scoreRow}>
+          <AppText variant="caption" color={THEME.colors.muted} style={{ fontSize: 11 }}>
+            Score {score}
+          </AppText>
+          {isVerified && (
+            <>
+              <AppText variant="caption" color={THEME.colors.muted} style={{ fontSize: 11 }}>·</AppText>
+              <Ionicons name="checkmark-circle" size={12} color="#22C55E" />
+              <AppText variant="caption" color={THEME.colors.muted} style={{ fontSize: 11 }}>Verified</AppText>
+            </>
+          )}
+        </View>
       </View>
       <Pressable onPress={onCall} hitSlop={6} style={styles.topIcon}>
-        <AppText variant="label">📞</AppText>
+        <Ionicons name="call" size={20} color="#000" />
       </Pressable>
       <Pressable onPress={onKebab} hitSlop={6} style={styles.topIcon}>
-        <AppText variant="label">⋮</AppText>
+        <Ionicons name="ellipsis-vertical" size={20} color="#000" />
       </Pressable>
     </View>
   );
@@ -395,13 +405,12 @@ function MessageBubble({ msg, myUid, onImagePress }) {
 function ReadReceipt({ read }) {
   // Single tick = sent. Double tick = delivered. Double-blue = read.
   return (
-    <AppText
-      variant="caption"
+    <Ionicons
+      name={read ? 'checkmark-done' : 'checkmark'}
+      size={12}
       color={read ? THEME.colors.primary : 'rgba(255,255,255,0.5)'}
       style={styles.receipt}
-    >
-      {read ? '✓✓' : '✓'}
-    </AppText>
+    />
   );
 }
 
@@ -481,7 +490,7 @@ function Composer({ value, onChange, onSend, onAttach }) {
   return (
     <View style={styles.composer}>
       <Pressable onPress={onAttach} hitSlop={6} style={styles.attachBtn}>
-        <AppText variant="label">📎</AppText>
+        <Ionicons name="attach" size={20} color="#5A585A" />
       </Pressable>
       <TextInput
         value={value}
@@ -493,9 +502,9 @@ function Composer({ value, onChange, onSend, onAttach }) {
       />
       <Pressable onPress={handleSend} disabled={!hasText}>
         <Animated.View style={[styles.sendBtn, sendStyle]}>
-          <AppText variant="label" color={THEME.colors.white}>➤</AppText>
+          <Ionicons name="send" size={18} color="#fff" />
           <Animated.View style={[styles.checkOverlay, checkStyle]} pointerEvents="none">
-            <AppText variant="label" color={THEME.colors.white}>✓</AppText>
+            <Ionicons name="checkmark" size={18} color="#fff" />
           </Animated.View>
         </Animated.View>
       </Pressable>
@@ -561,6 +570,23 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: THEME.colors.primary,
+  },
+  topName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  topBack: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ECEFEC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   topIcon: {
     width: THEME.sizes.iconButton,

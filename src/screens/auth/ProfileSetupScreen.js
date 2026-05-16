@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Animated, {
@@ -62,6 +63,8 @@ export default function ProfileSetupScreen({ navigation, route }) {
   const phone = route?.params?.phone ?? null;
 
   const [form, setForm] = useState({
+    // AUDIT FIX: added name as a required field per spec.
+    name: '',
     dob: '',
     gender: '',
     location: '',
@@ -120,16 +123,38 @@ export default function ProfileSetupScreen({ navigation, route }) {
   };
 
   const onContinue = () => {
-    // Minimum validation — DOB, Gender, Location, Profession drive
-    // discoverability in People Search per the PRD.
-    if (!form.gender || !form.location || !form.profession || !form.dob) {
-      toast.error('Please fill the required fields', 'DOB, Gender, Location, Profession');
+    // AUDIT FIX: validate every required field with specific messages.
+    // Name regex: 2-50 letters/spaces only.
+    const name = (form.name ?? '').trim();
+    if (!name || !/^[a-zA-Z\s]{2,50}$/.test(name)) {
+      toast.error('Invalid name', 'Name must be 2–50 letters only');
       haptics.error();
       return;
     }
+    if (!form.dob) {
+      toast.error('Date of birth is required');
+      haptics.error();
+      return;
+    }
+    // AUDIT FIX: must be at least 18.
+    const dobDate = new Date(form.dob);
+    const now = new Date();
+    let age = now.getFullYear() - dobDate.getFullYear();
+    const m = now.getMonth() - dobDate.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < dobDate.getDate())) age--;
+    if (Number.isNaN(age) || age < 18) {
+      toast.error('You must be at least 18 years old');
+      haptics.error();
+      return;
+    }
+    if (!form.gender)     { toast.error('Gender is required');     haptics.error(); return; }
+    if (!form.location)   { toast.error('Location is required');   haptics.error(); return; }
+    if (!form.profession) { toast.error('Profession is required'); haptics.error(); return; }
+
     haptics.light();
     const profileData = {
       ...form,
+      name,
       goOnline,
       photoUri, // raw local uri — upload happens in VerificationScreen
       yearlyIncome: form.yearlyIncome ? Number(form.yearlyIncome) : null,
@@ -151,12 +176,14 @@ export default function ProfileSetupScreen({ navigation, route }) {
             <View style={styles.topBar}>
               <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
                 <View style={styles.backButton}>
-                  <AppText variant="label">←</AppText>
+                  <Ionicons name="arrow-back" size={22} color="#000" />
                 </View>
               </Pressable>
-              <AppText variant="caption" color={THEME.colors.muted}>
-                {STRINGS.profileSetup.stepIndicator}
-              </AppText>
+              <View style={styles.progressDots}>
+                <View style={[styles.progressDot, styles.progressDotActive]} />
+                <View style={[styles.progressDot, styles.progressDotActive]} />
+                <View style={styles.progressDot} />
+              </View>
               <Pressable
                 onPress={() => navigation.navigate('Verification', { phone, profileData: null })}
                 hitSlop={10}
@@ -180,7 +207,7 @@ export default function ProfileSetupScreen({ navigation, route }) {
                   {photoUri ? (
                     <PhotoPreview uri={photoUri} />
                   ) : (
-                    <AppText variant="heading" color={THEME.colors.muted}>📷</AppText>
+                    <Ionicons name="camera-outline" size={32} color="#5A585A" />
                   )}
                 </View>
               </Pressable>
@@ -196,6 +223,15 @@ export default function ProfileSetupScreen({ navigation, route }) {
             </StaggerBlock>
 
             <View style={styles.fieldStack}>
+              {/* AUDIT FIX: name field added (required, letters only). */}
+              <StaggerBlock index={2.5}>
+                <FloatingTextField
+                  label="Full Name *"
+                  value={form.name}
+                  onChangeText={(v) => setField('name', v)}
+                  placeholder="Your full name"
+                />
+              </StaggerBlock>
               <StaggerBlock index={3}>
                 <FloatingDateField
                   label={STRINGS.profileSetup.labels.dob}
@@ -435,7 +471,7 @@ function FloatingDateField({ label, value, onChange }) {
           <AppText variant="label" color={value ? THEME.colors.text : 'transparent'}>
             {value || '—'}
           </AppText>
-          <AppText variant="label" color={THEME.colors.muted}>📅</AppText>
+          <Ionicons name="calendar-outline" size={18} color="#5A585A" />
         </View>
       </Pressable>
 
@@ -505,14 +541,7 @@ function PickerField({ label, value, options, onChange, badge, disabled }) {
 
   return (
     <View style={styles.fieldContainer}>
-      <View style={styles.labelRow}>
-        <Animated.Text style={[styles.floatingLabel, labelStyle]}>{label}</Animated.Text>
-        {!!badge && (
-          <View style={styles.aiBadge}>
-            <AppText variant="caption" style={styles.aiBadgeText}>{badge}</AppText>
-          </View>
-        )}
-      </View>
+      <Animated.Text style={[styles.floatingLabel, labelStyle]}>{label}</Animated.Text>
       <Pressable onPress={openPicker} disabled={disabled}>
         <View
           style={[
@@ -522,10 +551,17 @@ function PickerField({ label, value, options, onChange, badge, disabled }) {
             disabled && { opacity: 0.4 },
           ]}
         >
-          <AppText variant="label" color={value ? THEME.colors.text : 'transparent'}>
+          <AppText variant="label" color={value ? THEME.colors.text : 'transparent'} style={{ flex: 1 }}>
             {value || '—'}
           </AppText>
-          <AppText variant="label" color={THEME.colors.muted}>▾</AppText>
+          <View style={styles.pickerRight}>
+            {!!badge && (
+              <View style={styles.aiBadge}>
+                <AppText variant="caption" style={styles.aiBadgeText}>{badge}</AppText>
+              </View>
+            )}
+            <Ionicons name="chevron-down" size={18} color="#5A585A" />
+          </View>
         </View>
       </Pressable>
 
@@ -547,7 +583,7 @@ function PickerField({ label, value, options, onChange, badge, disabled }) {
                   <AppText variant="label" color={opt === value ? THEME.colors.primary : THEME.colors.text}>
                     {opt}
                   </AppText>
-                  {opt === value && <AppText variant="label" color={THEME.colors.primary}>✓</AppText>}
+                  {opt === value && <Ionicons name="checkmark" size={18} color={THEME.colors.primary} />}
                 </Pressable>
               ))}
             </ScrollView>
@@ -583,11 +619,11 @@ const styles = StyleSheet.create({
   },
   subtitle: { marginTop: 4 },
 
-  photoWrap: { alignItems: 'center', gap: 6 },
+  photoWrap: { alignItems: 'center', gap: 6, marginBottom: 24 },
   photoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     backgroundColor: THEME.colors.subtle,
     borderWidth: 2,
     borderStyle: 'dashed',
@@ -596,43 +632,57 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  photoPreviewWrap: { width: 80, height: 80, borderRadius: 40, overflow: 'hidden' },
+  photoPreviewWrap: { width: 88, height: 88, borderRadius: 44, overflow: 'hidden' },
   photoImage: { width: '100%', height: '100%' },
   photoLabel: { marginTop: 4 },
 
   goOnlineCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
+    padding: 20,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: THEME.colors.border,
     gap: THEME.spacing.md,
   },
 
-  fieldStack: { gap: 22 },
-  fieldContainer: { position: 'relative' },
-  labelRow: {
+  fieldStack: { gap: 20 },
+  progressDots: {
     flexDirection: 'row',
+    gap: 6,
     alignItems: 'center',
-    gap: 8,
+  },
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: THEME.colors.subtle,
+  },
+  progressDotActive: {
+    backgroundColor: THEME.colors.primary,
+  },
+  fieldContainer: { position: 'relative' },
+  floatingLabel: {
+    fontSize: 14,
+    color: THEME.colors.muted,
+    transformOrigin: 'left center',
     position: 'absolute',
     left: 16,
     top: 14,
     zIndex: 1,
   },
-  floatingLabel: {
-    fontSize: 14,
-    color: THEME.colors.muted,
-    transformOrigin: 'left center',
+  pickerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   aiBadge: {
     backgroundColor: THEME.colors.accentBlue,
-    borderRadius: 4,
-    paddingHorizontal: 6,
+    borderRadius: THEME.borderRadius.pill,
+    paddingHorizontal: 8,
     paddingVertical: 2,
   },
-  aiBadgeText: { fontSize: 9, fontWeight: '600' },
+  aiBadgeText: { fontSize: 10, fontWeight: '600' },
   fieldInput: {
     height: 48,
     borderRadius: 12,
