@@ -1,8 +1,13 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import {
+  initializeAuth,
+  getAuth,
+  getReactNativePersistence,
+} from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { IS_MOCK } from './src/constants/config';
 
 const firebaseConfig = {
@@ -25,8 +30,20 @@ if (!IS_MOCK && missing.length > 0) {
 let app, auth, db, storage, functions;
 
 if (!IS_MOCK) {
-  app       = initializeApp(firebaseConfig);
-  auth      = getAuth(app);
+  app = initializeApp(firebaseConfig);
+
+  // initializeAuth with AsyncStorage persistence — must run before any
+  // getAuth(app) call in the app. If something else already initialized
+  // auth (e.g. Fast Refresh re-running this module), fall back to the
+  // existing instance.
+  try {
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    });
+  } catch (_) {
+    auth = getAuth(app);
+  }
+
   db        = getFirestore(app);
   storage   = getStorage(app);
   functions = getFunctions(app, 'us-central1');

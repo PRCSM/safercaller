@@ -91,11 +91,20 @@ export const updateOnlineStatus = async (uid, goOnline) => {
 };
 
 export const checkDuplicatePhone = async (phone) => {
+  // This runs BEFORE OTP verification (during the Signup step), so the
+  // caller is not yet authenticated and the Firestore rule on /users
+  // correctly blocks the read. Phone uniqueness is enforced by Firebase
+  // Auth itself — the same number cannot be registered twice — so this
+  // pre-flight check is a UX nicety only. Treat a permission-denied
+  // response as "not duplicate" and let Auth do the real check.
   try {
     const q = query(usersCol(), where('phone', '==', phone), limit(1));
     const snap = await getDocs(q);
     return !snap.empty;
   } catch (err) {
+    if (err?.code === 'permission-denied' || err?.code === 'firestore/permission-denied') {
+      return false;
+    }
     console.warn('[userService.checkDuplicatePhone]', err);
     throw err;
   }
@@ -107,6 +116,9 @@ export const checkDuplicateEmail = async (email) => {
     const snap = await getDocs(q);
     return !snap.empty;
   } catch (err) {
+    if (err?.code === 'permission-denied' || err?.code === 'firestore/permission-denied') {
+      return false;
+    }
     console.warn('[userService.checkDuplicateEmail]', err);
     throw err;
   }
