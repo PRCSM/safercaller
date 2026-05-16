@@ -55,8 +55,10 @@ const formatDateISO = (date) => {
 };
 
 export default function ProfileSetupScreen({ navigation, route }) {
-  // Carry user + phone forward from OTPScreen → into VerificationScreen.
-  const user = route?.params?.user ?? null;
+  // Carry only phone forward — the signed-in user lives in RNFirebase
+  // Auth (auth().currentUser) and VerificationScreen reads it from there.
+  // Passing the Firebase user object through nav params would warn about
+  // non-serializable values and can break state persistence.
   const phone = route?.params?.phone ?? null;
 
   const [form, setForm] = useState({
@@ -132,7 +134,7 @@ export default function ProfileSetupScreen({ navigation, route }) {
       photoUri, // raw local uri — upload happens in VerificationScreen
       yearlyIncome: form.yearlyIncome ? Number(form.yearlyIncome) : null,
     };
-    navigation.navigate('Verification', { user, phone, profileData });
+    navigation.navigate('Verification', { phone, profileData });
   };
 
   return (
@@ -156,7 +158,7 @@ export default function ProfileSetupScreen({ navigation, route }) {
                 {STRINGS.profileSetup.stepIndicator}
               </AppText>
               <Pressable
-                onPress={() => navigation.navigate('Verification', { user, phone, profileData: null })}
+                onPress={() => navigation.navigate('Verification', { phone, profileData: null })}
                 hitSlop={10}
               >
                 <AppText variant="caption" color={THEME.colors.muted}>

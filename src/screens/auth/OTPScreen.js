@@ -102,13 +102,16 @@ export default function OTPScreen({ navigation, route }) {
       if (finalCode === WRONG_DEMO_CODE) {
         throw new Error('Incorrect OTP. Please try again.');
       }
-      const user = await authService.verifyOTP(verificationId, finalCode);
+      await authService.verifyOTP(finalCode);
       setStatus('correct');
       haptics.success();
-      // Pass user via params — setUser is deferred to VerificationScreen
-      // so the auth flow stays inside AuthStack until identity is verified.
+      // The signed-in user is held by RNFirebase Auth (auth().currentUser).
+      // setUser is deferred to VerificationScreen so the auth flow stays
+      // inside AuthStack until identity is verified — see Option B in the
+      // decisions log. Don't pass the Firebase user object through nav;
+      // it has non-serializable methods and trips React Navigation.
       setTimeout(() => {
-        navigation.navigate('ProfileSetup', { user, phone });
+        navigation.navigate('ProfileSetup', { phone });
       }, 300);
     } catch (err) {
       setStatus('wrong');

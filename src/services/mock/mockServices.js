@@ -27,11 +27,12 @@ export const mockAuthService = {
     await delay();
     return 'mock-confirmation-object';
   },
-  verifyOTP: async (confirmation, code) => {
+  verifyOTP: async (code) => {
     await delay();
     if (code.length !== 6) throw new Error('Enter all 6 digits');
     return mockUser;
   },
+  getCurrentUser: () => mockUser,
   signOut: async () => {
     await delay();
     resetAllStores();

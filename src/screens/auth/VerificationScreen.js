@@ -21,7 +21,7 @@ import { Button } from '../../components/common/Button';
 import { THEME } from '../../constants/theme';
 import { STRINGS } from '../../constants/strings';
 import { haptics } from '../../constants/animations';
-import { userService } from '../../services';
+import { userService, authService } from '../../services';
 import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../utils/toast';
 
@@ -34,7 +34,10 @@ const CARDS = [
 const LIVENESS_SECONDS = 10;
 
 export default function VerificationScreen({ navigation, route }) {
-  const user = route?.params?.user ?? null;
+  // The signed-in Firebase user lives in RNFirebase Auth — read it
+  // directly rather than passing through nav params (which would warn
+  // about non-serializable values).
+  const user = authService.getCurrentUser();
   const profileData = route?.params?.profileData ?? null;
 
   const setUser = useAuthStore((s) => s.setUser);
