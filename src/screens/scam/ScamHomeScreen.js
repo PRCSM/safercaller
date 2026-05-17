@@ -373,8 +373,8 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: THEME.colors.background },
   header: {
     paddingHorizontal: THEME.spacing.lg,
-    paddingTop: THEME.spacing.sm,
-    paddingBottom: THEME.spacing.md,
+    paddingTop: 4,
+    paddingBottom: THEME.spacing.sm,
   },
 
   searchBar: {
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
 
   emptyWrap: {
     alignItems: 'center',
-    paddingTop: THEME.spacing.huge,
+    paddingTop: THEME.spacing.xl,
   },
 
   fabPositioner: {

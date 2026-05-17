@@ -450,7 +450,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: THEME.spacing.lg,
-    paddingVertical: THEME.spacing.md,
+    paddingTop: 4,
+    paddingBottom: THEME.spacing.sm,
   },
   filterIcon: {
     width: THEME.sizes.iconButton,

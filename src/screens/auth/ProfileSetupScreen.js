@@ -667,9 +667,11 @@ const styles = StyleSheet.create({
     color: THEME.colors.muted,
     transformOrigin: 'left center',
     position: 'absolute',
-    left: 16,
+    left: 12,
     top: 14,
-    zIndex: 1,
+    paddingHorizontal: 4,
+    backgroundColor: '#FFFFFF',
+    zIndex: 2,
   },
   pickerRight: {
     flexDirection: 'row',

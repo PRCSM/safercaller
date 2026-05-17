@@ -295,8 +295,8 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: THEME.spacing.lg,
-    paddingTop: THEME.spacing.sm,
-    paddingBottom: THEME.spacing.md,
+    paddingTop: 4,
+    paddingBottom: THEME.spacing.sm,
   },
 
   profileCard: {

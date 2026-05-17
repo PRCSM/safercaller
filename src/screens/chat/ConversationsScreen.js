@@ -242,8 +242,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: THEME.spacing.lg,
-    paddingTop: THEME.spacing.sm,
-    paddingBottom: THEME.spacing.md,
+    paddingTop: 4,
+    paddingBottom: THEME.spacing.sm,
   },
   title: { fontSize: 20, fontWeight: '500' },
   composeBtn: {

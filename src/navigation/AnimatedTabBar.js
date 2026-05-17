@@ -51,11 +51,11 @@ const ICON_SCALE_SPRING = { damping: 18, stiffness: 200 };
 const LABEL_SPRING = { damping: 20, stiffness: 220 };
 
 const TAB_ICONS = {
-  DialerTab:   'keypad',
-  RecentsTab:  'time-outline',
-  ScamTab:     'shield-outline',
-  ListingsTab: 'grid-outline',
-  MoreTab:     'menu-outline',
+  DialerTab:   { active: 'keypad',            inactive: 'keypad-outline' },
+  RecentsTab:  { active: 'time',              inactive: 'time-outline' },
+  ScamTab:     { active: 'shield-checkmark',  inactive: 'shield-outline' },
+  ListingsTab: { active: 'grid',              inactive: 'grid-outline' },
+  MoreTab:     { active: 'menu',              inactive: 'menu-outline' },
 };
 
 export function AnimatedTabBar({ state, descriptors, navigation }) {
@@ -169,7 +169,10 @@ function TabItem({ routeName, label, isFocused, onPress, badge }) {
     opacity: labelOpacity.value,
   }));
 
-  const iconName = TAB_ICONS[routeName] ?? 'ellipse-outline';
+  const iconSet = TAB_ICONS[routeName];
+  const iconName = iconSet
+    ? (isFocused ? iconSet.active : iconSet.inactive)
+    : 'ellipse-outline';
   const iconColor = isFocused ? THEME.colors.primary : THEME.colors.muted;
 
   return (

@@ -138,9 +138,9 @@ export const STRINGS = Object.freeze({
   }),
 
   dialer: Object.freeze({
-    greetingMorning: 'Good morning 👋',
-    greetingAfternoon: 'Good afternoon 👋',
-    greetingEvening: 'Good evening 👋',
+    greetingMorning: 'Good morning',
+    greetingAfternoon: 'Good afternoon',
+    greetingEvening: 'Good evening',
     blockedToday: (n) => `${n} spam calls blocked today`,
     trustScoreLabel: 'Your Trust Score',
     trustGood: 'Good',
