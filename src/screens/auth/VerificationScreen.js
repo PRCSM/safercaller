@@ -81,7 +81,7 @@ export default function VerificationScreen({ navigation, route }) {
         return;
       }
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'], // FIX: MediaTypeOptions deprecated
         allowsEditing: true,
         quality: 0.7,
       });
@@ -453,9 +453,12 @@ function LivenessRecorderModal({ visible, onComplete, onCancel }) {
       setCount((c) => {
         if (c <= 1) {
           clearInterval(interval);
-          // Placeholder URI — swap for the recorded video uri once
-          // expo-camera is installed and wired here.
-          onComplete('mock://liveness-video.mp4');
+          // FIX: defer onComplete out of the setState updater. Calling a
+          // parent-state-mutating callback synchronously inside `setCount`
+          // produced "Cannot update a component (`VerificationScreen`)
+          // while rendering a different component (`LivenessRecorderModal`)".
+          // setTimeout 0 pushes it past the current render phase.
+          setTimeout(() => onComplete('mock://liveness-video.mp4'), 0);
           return 0;
         }
         return c - 1;

@@ -108,7 +108,7 @@ export default function ProfileSetupScreen({ navigation, route }) {
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'], // FIX: MediaTypeOptions deprecated
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.7,

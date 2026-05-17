@@ -135,7 +135,7 @@ export default function ChatScreen({ navigation, route }) {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'], // FIX: MediaTypeOptions deprecated
       quality: 0.7,
     });
     if (result.canceled) return;

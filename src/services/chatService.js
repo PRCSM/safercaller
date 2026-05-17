@@ -2,7 +2,7 @@ import {
   collection, addDoc, getDocs, getDoc, doc, updateDoc,
   query, where, orderBy, limit, onSnapshot, serverTimestamp
 } from '@react-native-firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from '@react-native-firebase/storage';
+import { ref, getDownloadURL } from '@react-native-firebase/storage';
 import { db, storage } from '../../firebaseConfig';
 
 export const getChatId = (uid1, uid2) => [uid1, uid2].sort().join('_');
@@ -12,12 +12,15 @@ export const sendMessage = async (chatId, senderId, receiverId, text, mediaUri =
     let mediaUrl = null;
     let mediaType = null;
     if (mediaUri) {
-      const response = await fetch(mediaUri);
-      const blob = await response.blob();
-      mediaType = blob.type;
+      // FIX: putFile(uri) takes the local file URI directly — avoids the
+      // Blob conversion that fails with "uploadBytes() is not implemented"
+      // on RN. mediaType is now inferred from the file extension server-side.
       const storageRef = ref(storage, 'chatMedia/' + chatId + '/' + Date.now());
-      await uploadBytes(storageRef, blob, { contentType: mediaType });
+      await storageRef.putFile(mediaUri);
       mediaUrl = await getDownloadURL(storageRef);
+      // Best-effort mime hint from extension for downstream rendering.
+      const ext = (mediaUri.split('.').pop() || '').toLowerCase();
+      mediaType = ext === 'mp4' || ext === 'mov' ? 'video' : 'image';
     }
     const msgData = {
       senderId,

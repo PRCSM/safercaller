@@ -10,7 +10,7 @@ import {
   getDocs,
   limit,
 } from '@react-native-firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from '@react-native-firebase/storage';
+import { ref, getDownloadURL } from '@react-native-firebase/storage';
 import { db, storage } from '../../firebaseConfig';
 
 /**
@@ -80,17 +80,13 @@ export const updateUserProfile = async (uid, data) => {
 
 export const uploadProfilePhoto = async (uid, uri) => {
   try {
-    // expo-image-picker URIs are file:// paths; fetch + blob is the cross-
-    // platform way to get an uploadable body. For large files, switch to
-    // uploadBytesResumable so we can surface progress to the UI.
-    const response = await fetch(uri);
-    const blob = await response.blob();
-    // AUDIT FIX: match storage.rules `profilePhotos/{uid}/{fileName}` —
-    // the rule requires uid as a folder, not as the filename root. The
-    // old path `profilePhotos/${uid}.jpg` got permission-denied because
-    // it didn't fit the path matcher.
+    // FIX: use Reference.putFile(uri) — RNFirebase's native upload path.
+    // The modular `uploadBytes` requires a Blob, and Blob from a
+    // file:// URI on RN throws "`uploadBytes()` is not implemented".
+    //
+    // Storage path matches storage.rules `profilePhotos/{uid}/{fileName}`.
     const photoRef = ref(storage, `profilePhotos/${uid}/avatar.jpg`);
-    await uploadBytes(photoRef, blob);
+    await photoRef.putFile(uri);
     const url = await getDownloadURL(photoRef);
     // Persist the URL on the profile doc so reads don't need a separate
     // Storage lookup.

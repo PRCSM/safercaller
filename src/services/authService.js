@@ -1,24 +1,31 @@
-import auth from '@react-native-firebase/auth';
+import { getApp } from '@react-native-firebase/app';
+import {
+  getAuth,
+  signInWithPhoneNumber as fbSignInWithPhoneNumber,
+  signOut as fbSignOut,
+  onAuthStateChanged as fbOnAuthStateChanged,
+} from '@react-native-firebase/auth';
 import { resetAllStores } from '../store';
 
 /**
- * Phone OTP auth flow via @react-native-firebase/auth.
+ * Phone OTP auth flow via @react-native-firebase/auth — fully modular
+ * API (no more `auth().*` namespaced calls — those emit the v22 "Please
+ * use getApp() instead" deprecation warnings).
  *
- * RNFirebase's signInWithPhoneNumber returns a confirmation object that
- * has a non-serializable .confirm() method. Passing that object through
- * React Navigation params triggers the "Non-serializable values were
- * found in the navigation state" warning AND breaks state persistence.
- *
- * So we cache the confirmation in module scope here and let callers
- * verify the OTP via `verifyOTP(code)` — only serializable strings cross
- * the navigation boundary.
+ * The confirmation object that signInWithPhoneNumber returns has a non-
+ * serializable `.confirm()` method, so we cache it in module scope here
+ * and let callers verify the OTP via `verifyOTP(code)` — only
+ * serializable strings cross the React Navigation boundary.
  */
+
+const getAuthInstance = () => getAuth(getApp());
+
 let pendingConfirmation = null;
 
 export const signUpWithPhone = async (phoneNumber) => {
-  const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
+  const confirmation = await fbSignInWithPhoneNumber(getAuthInstance(), phoneNumber);
   pendingConfirmation = confirmation;
-  // Return the serializable verificationId so the OTPScreen can display
+  // Return the serializable verificationId so OTPScreen can display
   // "OTP sent to X" UI without touching the confirmation object.
   return confirmation.verificationId;
 };
@@ -33,12 +40,11 @@ export const verifyOTP = async (code) => {
 };
 
 export const signOut = async () => {
-  await auth().signOut();
+  await fbSignOut(getAuthInstance());
   resetAllStores();
 };
 
-export const onAuthStateChanged = (callback) => {
-  return auth().onAuthStateChanged(callback);
-};
+export const onAuthStateChanged = (callback) =>
+  fbOnAuthStateChanged(getAuthInstance(), callback);
 
-export const getCurrentUser = () => auth().currentUser;
+export const getCurrentUser = () => getAuthInstance().currentUser;

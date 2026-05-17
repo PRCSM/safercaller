@@ -3,7 +3,7 @@ import {
   updateDoc, setDoc, query, where,
   orderBy, limit, startAfter, serverTimestamp
 } from '@react-native-firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from '@react-native-firebase/storage';
+import { ref, getDownloadURL } from '@react-native-firebase/storage';
 import { db, storage } from '../../firebaseConfig';
 
 export const createListing = async (sellerId, data, mediaFiles = []) => {
@@ -20,11 +20,11 @@ export const createListing = async (sellerId, data, mediaFiles = []) => {
       updatedAt: serverTimestamp(),
     });
     if (mediaFiles.length > 0) {
+      // FIX: putFile(uri) — native RN upload path. uploadBytes(blob) fails
+      // on React Native with "uploadBytes() is not implemented".
       const uploadPromises = mediaFiles.map(async (file, i) => {
-        const response = await fetch(file.uri);
-        const blob = await response.blob();
         const storageRef = ref(storage, 'listings/' + listingRef.id + '/media_' + i);
-        await uploadBytes(storageRef, blob, { contentType: file.mimeType || 'image/jpeg' });
+        await storageRef.putFile(file.uri);
         return await getDownloadURL(storageRef);
       });
       const mediaUrls = await Promise.all(uploadPromises);

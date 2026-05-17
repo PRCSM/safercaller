@@ -82,7 +82,7 @@ export default function ReportScamScreen({ navigation }) {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: ['images', 'videos'], // FIX: MediaTypeOptions deprecated
       quality: 0.7,
     });
     if (result.canceled) return;
