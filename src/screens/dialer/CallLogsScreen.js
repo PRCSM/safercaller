@@ -173,6 +173,7 @@ export default function CallLogsScreen({ navigation }) {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          style={styles.chipScroller}
           contentContainerStyle={styles.pillRow}
         >
           {FILTERS.map((f) => (
@@ -462,6 +463,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  chipScroller: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   pillRow: {
     paddingHorizontal: THEME.spacing.lg,
     paddingVertical: THEME.spacing.sm,

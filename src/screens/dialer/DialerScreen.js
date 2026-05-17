@@ -1,14 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { View, StyleSheet, Pressable, ScrollView, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle } from 'react-native-svg';
+import { formatDistanceToNowStrict } from 'date-fns';
 import Animated, {
   Easing,
   cancelAnimation,
-  runOnJS,
-  useAnimatedProps,
-  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -24,8 +21,6 @@ import { useDialerStore } from '../../store/dialerStore';
 import { scamService } from '../../services';
 import { toast } from '../../utils/toast';
 
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-
 const PAD_ROWS = [
   ['1', '2', '3'],
   ['4', '5', '6'],
@@ -39,16 +34,26 @@ const SUB_LABELS = {
   '0': '+',
 };
 
+const AVATAR_PALETTE = ['#9DC4F5', '#FFCAFC', '#FBE74E', '#A7CBF6', '#FFE0A7', '#C7E8C7'];
+
 const formatNumber = (num) => {
   if (!num) return '';
   return num.length <= 5 ? num : `${num.slice(0, 5)} ${num.slice(5)}`;
 };
 
-const formatShortNumber = (num) => {
+const last4 = (num) => {
   if (!num) return '';
-  const clean = num.replace('+91', '');
-  return clean.length > 7 ? `${clean.slice(0, 7)}…` : clean;
+  const clean = num.replace(/\D/g, '');
+  return clean.length >= 4 ? clean.slice(-4) : clean;
 };
+
+const initialsFor = (name) =>
+  (name ?? '?').trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
+
+const tierFor = (score) =>
+  score >= 700 ? { label: 'Good', color: '#0066FF' } :
+  score >= 400 ? { label: 'Fair', color: '#C68E00' } :
+                 { label: 'Low',  color: '#FF5A4D' };
 
 export default function DialerScreen({ navigation }) {
   const profile = useAuthStore((s) => s.profile);
@@ -58,20 +63,20 @@ export default function DialerScreen({ navigation }) {
   const deleteDigit = useDialerStore((s) => s.deleteDigit);
   const clearNumber = useDialerStore((s) => s.clearNumber);
   const addCallLog = useDialerStore((s) => s.addCallLog);
-  // Direct setter access to fill number from a recent-chip tap without
-  // typing each digit.
   const setCurrentNumberRaw = useDialerStore.setState;
 
   const score = profile?.reputationScore ?? 0;
+  const tier = tierFor(score);
   const missedCount = callLogs.filter((l) => l.status === 'missed').length;
-  const recentCalls = callLogs.slice(0, 5);
+  const blockedToday = callLogs.filter(
+    (l) => l.status === 'flagged' || l.status === 'scamBlocked'
+  ).length;
+  const recentCalls = callLogs.slice(0, 6);
+  const hasNumber = currentNumber.length > 0;
 
   const handleDigit = (digit) => addDigit(digit);
   const handleBackspace = () => deleteDigit();
-  const handleBackspaceLong = () => {
-    haptics.medium();
-    clearNumber();
-  };
+  const handleBackspaceLong = () => { haptics.medium(); clearNumber(); };
 
   const handleCallPress = async () => {
     if (!currentNumber) {
@@ -103,7 +108,7 @@ export default function DialerScreen({ navigation }) {
     }
   };
 
-  const handleRecentChipPress = (log) => {
+  const handleRecentTap = (log) => {
     haptics.light();
     setCurrentNumberRaw({ currentNumber: log.number ?? '' });
   };
@@ -114,8 +119,6 @@ export default function DialerScreen({ navigation }) {
       ?? toast.info('Switch to Recents tab to see all calls');
   };
 
-  const hasNumber = currentNumber.length > 0;
-
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       {/* ── TOP BAR ── */}
@@ -125,46 +128,69 @@ export default function DialerScreen({ navigation }) {
         </AppText>
         <View style={styles.topActions}>
           <Pressable onPress={() => toast.info('Search coming soon')} style={styles.iconButton} hitSlop={6}>
-            <Ionicons name="search" size={19} color="#5A585A" />
+            <Ionicons name="search" size={18} color="#5A585A" />
           </Pressable>
           <Pressable
             onPress={() => toast.info('Notifications coming soon')}
             style={[styles.iconButton, { marginLeft: 8 }]}
             hitSlop={6}
           >
-            <Ionicons name="notifications-outline" size={19} color="#5A585A" />
+            <Ionicons name="notifications-outline" size={18} color="#5A585A" />
             {missedCount > 0 && <View style={styles.bellBadge} />}
           </Pressable>
         </View>
       </View>
 
-      {/* ── COMPACT TRUST BAR ── */}
-      <TrustBar score={score} verified={profile?.verified} />
+      {/* ── INLINE TRUST PILL ── */}
+      <View style={styles.trustPill}>
+        <View style={styles.trustLeft}>
+          <View style={[styles.tierDot, { backgroundColor: tier.color }]} />
+          <AppText style={styles.trustLabel}>TRUST</AppText>
+          <AppText style={styles.trustScore}>{score}</AppText>
+          <AppText style={[styles.tierLabel, { color: tier.color }]}>{tier.label}</AppText>
+        </View>
+        <View style={styles.trustRight}>
+          <Ionicons name="shield-checkmark" size={12} color="#22C55E" />
+          <AppText style={styles.trustStat}>
+            {blockedToday} blocked today
+          </AppText>
+        </View>
+      </View>
 
-      {/* ── NUMBER DISPLAY ── */}
-      <View style={styles.numberRow}>
+      {/* ── SMART DISPLAY AREA — number OR last-call card ── */}
+      <View style={styles.displayArea}>
         {hasNumber ? (
-          <AppText style={styles.numberText} numberOfLines={1} adjustsFontSizeToFit>
+          <AppText
+            style={styles.numberText}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
             {formatNumber(currentNumber)}
           </AppText>
+        ) : recentCalls.length > 0 ? (
+          <LastCallCard log={recentCalls[0]} onPress={() => handleRecentTap(recentCalls[0])} />
         ) : (
-          <AppText style={styles.numberPlaceholder}>Enter number…</AppText>
+          <View style={styles.firstTimeWrap}>
+            <Ionicons name="keypad" size={20} color="#D1D6D2" />
+            <AppText style={styles.firstTimeHint}>Tap a number to dial</AppText>
+          </View>
         )}
       </View>
 
-      {/* ── RECENT CALLS STRIP — hidden when typing ── */}
-      {!hasNumber && recentCalls.length > 0 && (
+      {/* ── RECENT AVATAR STRIP — only when not typing AND have multiple logs ── */}
+      {!hasNumber && recentCalls.length > 1 && (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.recentStrip}
           style={styles.recentStripWrapper}
         >
-          {recentCalls.map((log) => (
-            <RecentChip
+          {recentCalls.slice(1, 6).map((log, idx) => (
+            <RecentAvatar
               key={log.id}
               log={log}
-              onPress={() => handleRecentChipPress(log)}
+              paletteIdx={idx}
+              onPress={() => handleRecentTap(log)}
             />
           ))}
         </ScrollView>
@@ -202,27 +228,56 @@ export default function DialerScreen({ navigation }) {
   );
 }
 
-/* ─────────────────────────────  Recent-calls chip  ───────────────────────────── */
+/* ─────────────────────────────  Last-call card (empty state)  ───────────────────────────── */
 
-function RecentChip({ log, onPress }) {
-  const direction = log.status === 'missed'
-    ? 'missed'
-    : log.direction ?? 'outbound';
-
-  const iconProps =
-    direction === 'missed'
-      ? { name: 'call-outline', color: '#FF5A4D' }
-      : direction === 'inbound'
-        ? { name: 'arrow-down-circle', color: '#22C55E' }
-        : { name: 'arrow-up-circle', color: '#0066FF' };
-
-  const display = (log.name ?? formatShortNumber(log.number) ?? '').slice(0, 12);
+function LastCallCard({ log, onPress }) {
+  const dirIcon =
+    log.status === 'missed'    ? { name: 'call-outline',       color: '#FF5A4D' } :
+    log.direction === 'inbound' ? { name: 'arrow-down-circle',  color: '#22C55E' } :
+                                  { name: 'arrow-up-circle',    color: '#0066FF' };
+  const when = log.createdAt
+    ? formatDistanceToNowStrict(
+        log.createdAt instanceof Date ? log.createdAt : new Date(log.createdAt),
+        { addSuffix: true }
+      )
+    : '';
+  const display = log.name ?? `+${last4(log.number)}`;
 
   return (
-    <Pressable onPress={onPress} style={styles.recentChip} hitSlop={6}>
-      <Ionicons name={iconProps.name} size={12} color={iconProps.color} />
-      <AppText style={styles.recentChipText} numberOfLines={1}>
-        {display || 'Unknown'}
+    <Pressable onPress={onPress} style={styles.lastCallCard}>
+      <View style={styles.lastCallLeft}>
+        <View style={[styles.lastCallAvatar, { backgroundColor: AVATAR_PALETTE[0] }]}>
+          <AppText style={styles.lastCallInitials}>{initialsFor(display)}</AppText>
+        </View>
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <View style={styles.lastCallRow}>
+            <Ionicons name={dirIcon.name} size={12} color={dirIcon.color} />
+            <AppText style={styles.lastCallName} numberOfLines={1}>
+              {display}
+            </AppText>
+          </View>
+          <AppText style={styles.lastCallTime}>{when}</AppText>
+        </View>
+      </View>
+      <View style={styles.lastCallCta}>
+        <Ionicons name="call" size={14} color="#fff" />
+      </View>
+    </Pressable>
+  );
+}
+
+/* ─────────────────────────────  Recent avatar (strip)  ───────────────────────────── */
+
+function RecentAvatar({ log, paletteIdx, onPress }) {
+  const display = log.name ?? `+${last4(log.number)}`;
+  const bg = AVATAR_PALETTE[paletteIdx % AVATAR_PALETTE.length];
+  return (
+    <Pressable onPress={onPress} style={styles.recentAvatarWrap} hitSlop={6}>
+      <View style={[styles.recentAvatar, { backgroundColor: bg }]}>
+        <AppText style={styles.recentInitials}>{initialsFor(display)}</AppText>
+      </View>
+      <AppText style={styles.recentLabel} numberOfLines={1}>
+        {display}
       </AppText>
     </Pressable>
   );
@@ -235,19 +290,18 @@ function DialKey({ digit, sub, onPress }) {
   const bgDarken = useSharedValue(0);
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.88, { damping: 15, stiffness: 400 });
-    bgDarken.value = withTiming(1, { duration: 80 });
+    scale.value = withSpring(0.92, { damping: 15, stiffness: 400 });
+    bgDarken.value = withTiming(1, { duration: 60 });
     haptics.light();
   };
-
   const handlePressOut = () => {
     scale.value = withSpring(1, { damping: 12, stiffness: 200 });
-    bgDarken.value = withTiming(0, { duration: 150 });
+    bgDarken.value = withTiming(0, { duration: 140 });
   };
 
   const buttonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    backgroundColor: bgDarken.value > 0.5 ? '#E8E8E8' : '#F5F5F5',
+    backgroundColor: bgDarken.value > 0.5 ? '#E5E5E5' : '#F2F2F2',
   }));
 
   const isSpecial = digit === '*' || digit === '#';
@@ -269,7 +323,7 @@ function DialKey({ digit, sub, onPress }) {
   );
 }
 
-/* ─────────────────────────────  Call button (pulse ring + glow)  ───────────────────────────── */
+/* ─────────────────────────────  Call button  ───────────────────────────── */
 
 function CallButton({ onPress }) {
   const ringProgress = useSharedValue(0);
@@ -288,16 +342,11 @@ function CallButton({ onPress }) {
     transform: [{ scale: 1 + ringProgress.value * 0.35 }],
     opacity: 0.3 * (1 - ringProgress.value),
   }));
-  const btnStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: btnScale.value }],
-  }));
+  const btnStyle = useAnimatedStyle(() => ({ transform: [{ scale: btnScale.value }] }));
 
   return (
     <Pressable
-      onPressIn={() => {
-        btnScale.value = withSpring(0.92, { damping: 15, stiffness: 320 });
-        haptics.medium();
-      }}
+      onPressIn={() => { btnScale.value = withSpring(0.92, { damping: 15, stiffness: 320 }); haptics.medium(); }}
       onPressOut={() => { btnScale.value = withSpring(1, springs.default); }}
       onPress={onPress}
     >
@@ -347,86 +396,6 @@ function BackspaceButton({ onPress, onLongPress, visible }) {
   );
 }
 
-/* ─────────────────────────────  Compact Trust Bar with mini ring  ───────────────────────────── */
-
-const RING_SIZE = 40;
-const RING_STROKE = 4;
-const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
-const RING_CIRC = 2 * Math.PI * RING_RADIUS;
-
-function TrustBar({ score, verified }) {
-  const max = 1000;
-  const progress = useSharedValue(0);
-  const scoreDriver = useSharedValue(0);
-  const [displayed, setDisplayed] = useState(0);
-
-  useEffect(() => {
-    progress.value = withTiming(score / max, {
-      duration: 900,
-      easing: Easing.out(Easing.cubic),
-    });
-    scoreDriver.value = withTiming(score, {
-      duration: 900,
-      easing: Easing.out(Easing.cubic),
-    });
-  }, [score, progress, scoreDriver]);
-
-  useAnimatedReaction(
-    () => Math.round(scoreDriver.value),
-    (current, prev) => {
-      if (current !== prev) runOnJS(setDisplayed)(current);
-    }
-  );
-
-  const animatedProps = useAnimatedProps(() => ({
-    strokeDashoffset: RING_CIRC * (1 - progress.value),
-  }));
-
-  const ringColor = score > 600 ? '#0066FF' : score > 300 ? '#FBE74E' : '#FF5A4D';
-  const tier = score > 600 ? 'Good' : score > 300 ? 'Fair' : 'Low';
-  const tierColor = score > 600 ? '#0066FF' : score > 300 ? '#856f00' : '#FF5A4D';
-
-  return (
-    <View style={styles.trustBar}>
-      <View style={styles.trustLeft}>
-        <AppText style={styles.trustLabel}>TRUST</AppText>
-        <AppText style={styles.trustScore}>{displayed}</AppText>
-        {verified?.idProof && (
-          <View style={styles.verifyChip}>
-            <Ionicons name="checkmark-circle" size={10} color="#22C55E" />
-            <AppText style={styles.verifyChipText}>Verified</AppText>
-          </View>
-        )}
-      </View>
-      <View style={styles.miniRingWrap}>
-        <Svg width={RING_SIZE} height={RING_SIZE} style={StyleSheet.absoluteFill}>
-          <Circle
-            cx={RING_SIZE / 2}
-            cy={RING_SIZE / 2}
-            r={RING_RADIUS}
-            stroke="#ECEFEC"
-            strokeWidth={RING_STROKE}
-            fill="none"
-          />
-          <AnimatedCircle
-            cx={RING_SIZE / 2}
-            cy={RING_SIZE / 2}
-            r={RING_RADIUS}
-            stroke={ringColor}
-            strokeWidth={RING_STROKE}
-            fill="none"
-            strokeDasharray={RING_CIRC}
-            strokeLinecap="round"
-            animatedProps={animatedProps}
-            transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
-          />
-        </Svg>
-        <AppText style={[styles.miniRingTier, { color: tierColor }]}>{tier}</AppText>
-      </View>
-    </View>
-  );
-}
-
 /* ─────────────────────────────  Styles  ───────────────────────────── */
 
 const styles = StyleSheet.create({
@@ -438,21 +407,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    height: 52,
+    height: 48,
   },
   wordmark: {
     fontSize: 17,
     fontFamily: THEME.typography.fontFamily.semibold,
     color: '#000',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
   wordmarkBlue: { color: THEME.colors.primary },
   topActions: { flexDirection: 'row', alignItems: 'center' },
   iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F5F5F5',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#F2F2F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -468,64 +437,55 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
   },
 
-  /* Trust bar */
-  trustBar: {
+  /* Trust pill — inline horizontal info bar */
+  trustPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginHorizontal: 16,
-    marginTop: 8,
-    height: 48,
+    marginHorizontal: 20,
+    marginTop: 4,
+    height: 36,
+    paddingHorizontal: 14,
     backgroundColor: '#F9FAF9',
-    borderRadius: 24,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: '#ECEFEC',
-    paddingHorizontal: 16,
   },
-  trustLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  trustLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  tierDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
   trustLabel: {
     fontSize: 9,
     fontFamily: THEME.typography.fontFamily.medium,
     color: '#5A585A',
-    letterSpacing: 1.5,
+    letterSpacing: 1.4,
   },
   trustScore: {
-    fontSize: 20,
+    fontSize: 15,
     fontFamily: THEME.typography.fontFamily.semibold,
     color: '#000',
-    marginLeft: 4,
+    marginLeft: 2,
   },
-  verifyChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(34,197,94,0.12)',
-    borderRadius: 35,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    marginLeft: 4,
-  },
-  verifyChipText: {
-    fontSize: 10,
-    fontFamily: THEME.typography.fontFamily.medium,
-    color: '#22C55E',
-  },
-  miniRingWrap: {
-    width: RING_SIZE,
-    height: RING_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  miniRingTier: {
-    fontSize: 8,
+  tierLabel: {
+    fontSize: 11,
     fontFamily: THEME.typography.fontFamily.semibold,
+    marginLeft: 4,
+  },
+  trustRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  trustStat: {
+    fontSize: 11,
+    fontFamily: THEME.typography.fontFamily.medium,
+    color: '#5A585A',
   },
 
-  /* Number display */
-  numberRow: {
-    height: 60,
+  /* Smart display area — number when typing, last-call card when empty */
+  displayArea: {
+    minHeight: 64,
     paddingHorizontal: 20,
-    marginTop: 12,
+    marginTop: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -533,47 +493,102 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontFamily: THEME.typography.fontFamily.semibold,
     color: '#000',
-    letterSpacing: 1.5,
+    letterSpacing: 1.2,
     textAlign: 'center',
   },
-  numberPlaceholder: {
-    fontSize: 22,
+
+  /* Empty-state first time */
+  firstTimeWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  firstTimeHint: {
+    fontSize: 14,
     fontFamily: THEME.typography.fontFamily.medium,
     color: '#D1D6D2',
   },
 
-  /* Recent strip */
-  recentStripWrapper: {
-    marginTop: 6,
-    maxHeight: 40,
-  },
-  recentStrip: {
-    paddingHorizontal: 16,
-    gap: 8,
-    alignItems: 'center',
-  },
-  recentChip: {
+  /* Last call card */
+  lastCallCard: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     backgroundColor: '#F9FAF9',
     borderRadius: 18,
     borderWidth: 1,
     borderColor: '#ECEFEC',
-    paddingHorizontal: 12,
-    height: 34,
   },
-  recentChipText: {
-    fontSize: 12,
-    fontFamily: THEME.typography.fontFamily.medium,
+  lastCallLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  lastCallAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lastCallInitials: {
+    fontSize: 13,
+    fontFamily: THEME.typography.fontFamily.semibold,
+    color: '#fff',
+  },
+  lastCallRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  lastCallName: {
+    fontSize: 14,
+    fontFamily: THEME.typography.fontFamily.semibold,
     color: '#000',
-    maxWidth: 80,
+    flexShrink: 1,
+  },
+  lastCallTime: {
+    fontSize: 11,
+    fontFamily: THEME.typography.fontFamily.medium,
+    color: '#5A585A',
+    marginTop: 2,
+  },
+  lastCallCta: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: THEME.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  /* Recent avatar strip */
+  recentStripWrapper: { maxHeight: 64, marginTop: 8 },
+  recentStrip: {
+    paddingHorizontal: 20,
+    gap: 14,
+    alignItems: 'center',
+  },
+  recentAvatarWrap: { alignItems: 'center', width: 52 },
+  recentAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recentInitials: {
+    fontSize: 13,
+    fontFamily: THEME.typography.fontFamily.semibold,
+    color: '#fff',
+  },
+  recentLabel: {
+    fontSize: 10,
+    fontFamily: THEME.typography.fontFamily.medium,
+    color: '#5A585A',
+    marginTop: 4,
+    textAlign: 'center',
   },
 
   /* Dial pad */
   dialPad: {
-    paddingHorizontal: 20,
-    marginTop: 8,
+    paddingHorizontal: 24,
+    marginTop: 16,
     gap: 8,
   },
   padRow: {
@@ -581,13 +596,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   keyHit: {
-    width: 100,
-    height: 72,
+    width: 92,
+    height: 68,
   },
   key: {
     flex: 1,
-    borderRadius: 36,
-    backgroundColor: '#F5F5F5',
+    borderRadius: 34,
+    backgroundColor: '#F2F2F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -597,11 +612,11 @@ const styles = StyleSheet.create({
     color: '#000',
     lineHeight: 30,
   },
-  keyDigitSpecial: { fontSize: 22, fontWeight: '300' },
+  keyDigitSpecial: { fontSize: 22, fontWeight: '400' },
   keySub: {
     fontSize: 9,
-    letterSpacing: 1.5,
-    color: '#999',
+    letterSpacing: 1.4,
+    color: '#888',
     fontFamily: THEME.typography.fontFamily.medium,
     marginTop: 1,
   },
@@ -611,9 +626,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 40,
-    marginTop: 8,
-    height: 80,
+    paddingHorizontal: 48,
+    marginTop: 12,
+    height: 92,
   },
   actionSide: {
     width: 44,
@@ -624,28 +639,31 @@ const styles = StyleSheet.create({
   callButtonWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 80,
-    height: 80,
+    width: 88,
+    height: 88,
   },
   callButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: THEME.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: THEME.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    elevation: 10,
   },
   callPulseRing: {
     position: 'absolute',
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     borderWidth: 1.5,
     borderColor: THEME.colors.primary,
   },
 });
+
+// STRINGS import retained for future use (greeting/sub strings still defined).
+void STRINGS;

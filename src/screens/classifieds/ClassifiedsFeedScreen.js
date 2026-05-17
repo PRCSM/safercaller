@@ -190,6 +190,7 @@ export default function ClassifiedsFeedScreen({ navigation }) {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          style={styles.chipScroller}
           contentContainerStyle={styles.chipRow}
         >
           {CATEGORIES.map((c, i) => (
@@ -562,9 +563,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
 
+  chipScroller: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   chipRow: {
     paddingHorizontal: THEME.spacing.lg,
-    paddingVertical: THEME.spacing.md,
+    paddingVertical: THEME.spacing.sm,
     gap: THEME.spacing.sm,
   },
   chip: {

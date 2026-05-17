@@ -127,6 +127,7 @@ export default function ScamHomeScreen({ navigation }) {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          style={styles.chipScroller}
           contentContainerStyle={styles.chipRow}
         >
           {FILTERS.map((f) => (
@@ -403,9 +404,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  chipScroller: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   chipRow: {
     paddingHorizontal: THEME.spacing.lg,
-    paddingVertical: THEME.spacing.md,
+    paddingVertical: THEME.spacing.sm,
     gap: THEME.spacing.sm,
   },
   chip: {
