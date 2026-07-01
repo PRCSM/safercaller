@@ -37,18 +37,18 @@ const FILTERS = [
 ];
 
 const RISK_BADGE = {
-  open:      { label: 'HIGH RISK', bg: THEME.colors.coral,   fg: THEME.colors.white, iconName: 'alert-circle', iconColor: '#fff' },
-  resolved:  { label: 'RESOLVED',  bg: THEME.colors.primary, fg: THEME.colors.white, iconName: 'checkmark-circle', iconColor: '#fff' },
-  reviewing: { label: 'REVIEWING', bg: THEME.colors.warning, fg: THEME.colors.text,  iconName: 'time', iconColor: '#000' },
+  open:      { label: 'HIGH RISK', bg: THEME.colors.trust.danger,  fg: THEME.colors.white, iconName: 'alert-circle', iconColor: '#fff' },
+  resolved:  { label: 'RESOLVED',  bg: THEME.colors.trust.safe,    fg: THEME.colors.white, iconName: 'checkmark-circle', iconColor: '#fff' },
+  reviewing: { label: 'REVIEWING', bg: THEME.colors.trust.caution, fg: THEME.colors.white, iconName: 'time', iconColor: '#fff' },
 };
 const STATUS_ACCENT = {
-  open: THEME.colors.coral, resolved: THEME.colors.primary, reviewing: THEME.colors.warning,
+  open: THEME.colors.trust.danger, resolved: THEME.colors.trust.safe, reviewing: THEME.colors.trust.caution,
 };
 const STATUS_PILL_BG = {
-  open: 'rgba(255,90,77,0.12)', resolved: 'rgba(0,102,255,0.15)', reviewing: 'rgba(251,231,78,0.25)',
+  open: THEME.colors.trust.dangerSoft, resolved: THEME.colors.trust.safeSoft, reviewing: THEME.colors.trust.cautionSoft,
 };
 const STATUS_PILL_FG = {
-  open: THEME.colors.coral, resolved: THEME.colors.primary, reviewing: THEME.colors.text,
+  open: THEME.colors.trust.dangerText, resolved: THEME.colors.trust.safeText, reviewing: THEME.colors.trust.cautionText,
 };
 
 const DEBOUNCE_MS = 300;
@@ -102,11 +102,11 @@ export default function ScamSearchScreen({ navigation, route }) {
             hitSlop={10}
             style={styles.backButton}
           >
-            <Ionicons name="arrow-back" size={22} color="#000" />
+            <Ionicons name="arrow-back" size={22} color={THEME.colors.textPrimary} />
           </Pressable>
 
           <View style={styles.searchBar}>
-            <Ionicons name="search" size={20} color="#5A585A" style={styles.searchIcon} />
+            <Ionicons name="search" size={20} color={THEME.colors.textMuted} style={styles.searchIcon} />
             <TextInput
               ref={inputRef}
               value={queryText}
@@ -119,7 +119,7 @@ export default function ScamSearchScreen({ navigation, route }) {
             />
             {queryText.length > 0 && (
               <Pressable hitSlop={6} onPress={() => setQueryText('')}>
-                <Ionicons name="close-circle" size={18} color="#5A585A" />
+                <Ionicons name="close-circle" size={18} color={THEME.colors.textMuted} />
               </Pressable>
             )}
           </View>
@@ -172,7 +172,7 @@ export default function ScamSearchScreen({ navigation, route }) {
                 <Ionicons
                   name={queryText.trim().length === 0 ? 'search' : 'help-circle-outline'}
                   size={48}
-                  color="#D1D6D2"
+                  color={THEME.colors.textDisabled}
                   style={styles.emptyIcon}
                 />
                 <AppText variant="label" style={styles.emptyTitle}>
@@ -204,7 +204,7 @@ function FilterChip({ label, active, onPress }) {
   const animStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       progress.value, [0, 1],
-      [THEME.colors.subtle, THEME.colors.dark]
+      [THEME.colors.subtle, THEME.colors.primary]
     ),
   }));
   return (

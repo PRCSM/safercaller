@@ -265,7 +265,7 @@ function TopBar({ name, score, verified, onBack, onCall, onKebab }) {
   return (
     <View style={styles.topBar}>
       <Pressable onPress={onBack} hitSlop={10} style={styles.topBack}>
-        <Ionicons name="arrow-back" size={22} color="#000" />
+        <Ionicons name="arrow-back" size={22} color={THEME.colors.textPrimary} />
       </Pressable>
       <View style={{ flex: 1, marginLeft: 12 }}>
         <View style={styles.nameRow}>
@@ -282,17 +282,17 @@ function TopBar({ name, score, verified, onBack, onCall, onKebab }) {
           {isVerified && (
             <>
               <AppText variant="caption" color={THEME.colors.muted} style={{ fontSize: 11 }}>·</AppText>
-              <Ionicons name="checkmark-circle" size={12} color="#22C55E" />
+              <Ionicons name="checkmark-circle" size={12} color={THEME.colors.trust.safe} />
               <AppText variant="caption" color={THEME.colors.muted} style={{ fontSize: 11 }}>Verified</AppText>
             </>
           )}
         </View>
       </View>
       <Pressable onPress={onCall} hitSlop={6} style={styles.topIcon}>
-        <Ionicons name="call" size={20} color="#000" />
+        <Ionicons name="call" size={20} color={THEME.colors.textPrimary} />
       </Pressable>
       <Pressable onPress={onKebab} hitSlop={6} style={styles.topIcon}>
-        <Ionicons name="ellipsis-vertical" size={20} color="#000" />
+        <Ionicons name="ellipsis-vertical" size={20} color={THEME.colors.textPrimary} />
       </Pressable>
     </View>
   );
@@ -490,7 +490,7 @@ function Composer({ value, onChange, onSend, onAttach }) {
   return (
     <View style={styles.composer}>
       <Pressable onPress={onAttach} hitSlop={6} style={styles.attachBtn}>
-        <Ionicons name="attach" size={20} color="#5A585A" />
+        <Ionicons name="attach" size={20} color={THEME.colors.textSecondary} />
       </Pressable>
       <TextInput
         value={value}
@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#ECEFEC',
+    backgroundColor: THEME.colors.subtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -723,7 +723,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: '100%',
     height: '100%',
-    backgroundColor: THEME.colors.success,
+    backgroundColor: THEME.colors.trust.safe,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -11,11 +11,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle } from 'react-native-svg';
 import Animated, {
   Easing,
   interpolateColor,
-  useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -26,13 +24,12 @@ import Animated, {
 import { PageWrapper } from '../../components/common/PageWrapper';
 import { AppText } from '../../components/common/AppText';
 import { Button } from '../../components/common/Button';
+import { TrustRing } from '../../components/common/TrustRing';
 import { THEME } from '../../constants/theme';
 import { haptics, springs } from '../../constants/animations';
 import { peopleService } from '../../services';
 import { usePeopleStore } from '../../store/peopleStore';
 import { toast } from '../../utils/toast';
-
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 const GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'];
 const MARITALS = ['Single', 'Married', 'Divorced', 'Widowed'];
@@ -52,12 +49,6 @@ const EMPTY_FILTERS = {
   incomeMin: '',
   incomeMax: '',
   verifiedOnly: false,
-};
-
-const ringColorFor = (score) => {
-  if (score >= 700) return THEME.colors.success;
-  if (score >= 400) return THEME.colors.warning;
-  return THEME.colors.coral;
 };
 
 export default function PeopleSearchScreen({ navigation }) {
@@ -172,9 +163,9 @@ export default function PeopleSearchScreen({ navigation }) {
             onPress={() => { haptics.light(); setPanelOpen((p) => !p); }}
             style={styles.filterBtn}
           >
-            <Ionicons name="options-outline" size={14} color="#000" />
+            <Ionicons name="options-outline" size={14} color={THEME.colors.textPrimary} />
             <AppText variant="caption">Filters</AppText>
-            <Ionicons name={panelOpen ? 'chevron-up' : 'chevron-down'} size={14} color="#000" />
+            <Ionicons name={panelOpen ? 'chevron-up' : 'chevron-down'} size={14} color={THEME.colors.textPrimary} />
           </Pressable>
           <ScrollView
             horizontal
@@ -221,7 +212,7 @@ export default function PeopleSearchScreen({ navigation }) {
           ListEmptyComponent={
             !isLoading && (
               <View style={styles.emptyWrap}>
-                <Ionicons name="people-outline" size={48} color="#D1D6D2" style={styles.emptyEmoji} />
+                <Ionicons name="people-outline" size={48} color={THEME.colors.textDisabled} style={styles.emptyEmoji} />
                 <AppText variant="label" style={styles.emptyTitle}>
                   No people found
                 </AppText>
@@ -400,7 +391,7 @@ function PickerField({ label, value, options, onChange }) {
         <AppText variant="label" color={value ? THEME.colors.text : THEME.colors.border}>
           {value || 'Any'}
         </AppText>
-        <Ionicons name="chevron-down" size={18} color="#5A585A" />
+        <Ionicons name="chevron-down" size={18} color={THEME.colors.textMuted} />
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -464,35 +455,21 @@ function ActiveChip({ label, onRemove }) {
 
 /* ─────────────────────────────  Person card  ───────────────────────────── */
 
-const RING_SIZE = 44;
-const RING_STROKE = 4;
-const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
-const RING_CIRC = 2 * Math.PI * RING_RADIUS;
-
 function PersonCard({ person, index, onChat, onCall, onPress }) {
   const ty = useSharedValue(20);
   const opacity = useSharedValue(0);
-  const ringProgress = useSharedValue(0);
 
   const score = person.reputationScore ?? 0;
-  const ringColor = ringColorFor(score);
 
   useEffect(() => {
     const delay = Math.min(index, 12) * 60;
     ty.value = withDelay(delay, withSpring(0, springs.default));
     opacity.value = withDelay(delay, withTiming(1, { duration: 280, easing: Easing.out(Easing.cubic) }));
-    ringProgress.value = withDelay(
-      delay + 200,
-      withTiming(Math.min(1, score / 1000), { duration: 800, easing: Easing.out(Easing.cubic) })
-    );
-  }, [index, score, ty, opacity, ringProgress]);
+  }, [index, ty, opacity]);
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: ty.value }],
     opacity: opacity.value,
-  }));
-  const ringProps = useAnimatedProps(() => ({
-    strokeDashoffset: RING_CIRC * (1 - ringProgress.value),
   }));
 
   const verified = person.verified ?? {};
@@ -524,39 +501,15 @@ function PersonCard({ person, index, onChat, onCall, onPress }) {
           </View>
 
           <View style={styles.ringWrap}>
-            <Svg width={RING_SIZE} height={RING_SIZE}>
-              <Circle
-                cx={RING_SIZE / 2}
-                cy={RING_SIZE / 2}
-                r={RING_RADIUS}
-                stroke={THEME.colors.subtle}
-                strokeWidth={RING_STROKE}
-                fill="none"
-              />
-              <AnimatedCircle
-                cx={RING_SIZE / 2}
-                cy={RING_SIZE / 2}
-                r={RING_RADIUS}
-                stroke={ringColor}
-                strokeWidth={RING_STROKE}
-                fill="none"
-                strokeLinecap="round"
-                strokeDasharray={RING_CIRC}
-                animatedProps={ringProps}
-                transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
-              />
-            </Svg>
-            <View style={styles.ringCenter}>
-              <AppText variant="caption" style={{ fontSize: 10 }}>{score}</AppText>
-            </View>
+            <TrustRing score={score} size={44} label={null} />
           </View>
         </View>
 
         <View style={styles.cardActions}>
           {lowTrust ? (
             <View style={styles.lowTrustRow}>
-              <Ionicons name="alert-circle" size={14} color={THEME.colors.coral} />
-              <AppText variant="caption" color={THEME.colors.coral}>
+              <Ionicons name="alert-circle" size={14} color={THEME.colors.trust.danger} />
+              <AppText variant="caption" color={THEME.colors.trust.danger}>
                 Low trust score
               </AppText>
             </View>

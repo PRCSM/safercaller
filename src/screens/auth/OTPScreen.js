@@ -165,7 +165,7 @@ export default function OTPScreen({ navigation, route }) {
           <View style={styles.topBar}>
             <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
               <View style={styles.backButton}>
-                <Ionicons name="arrow-back" size={22} color="#000" />
+                <Ionicons name="arrow-back" size={22} color={THEME.colors.textPrimary} />
               </View>
             </Pressable>
           </View>

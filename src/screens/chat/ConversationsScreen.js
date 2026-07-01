@@ -117,12 +117,12 @@ export default function ConversationsScreen({ navigation }) {
         <View style={styles.topBar}>
           <AppText variant="heading" style={styles.title}>Messages</AppText>
           <Pressable onPress={openCompose} hitSlop={6} style={styles.composeBtn}>
-            <Ionicons name="pencil-outline" size={20} color="#5A585A" />
+            <Ionicons name="pencil-outline" size={20} color={THEME.colors.textSecondary} />
           </Pressable>
         </View>
 
         <View style={styles.searchWrap}>
-          <Ionicons name="search" size={18} color="#5A585A" style={{ marginRight: 8 }} />
+          <Ionicons name="search" size={18} color={THEME.colors.textMuted} style={{ marginRight: 8 }} />
           <TextInput
             value={filter}
             onChangeText={setFilter}
@@ -132,7 +132,7 @@ export default function ConversationsScreen({ navigation }) {
           />
           {filter.length > 0 && (
             <Pressable hitSlop={6} onPress={() => setFilter('')}>
-              <Ionicons name="close-circle" size={16} color="#5A585A" />
+              <Ionicons name="close-circle" size={16} color={THEME.colors.textMuted} />
             </Pressable>
           )}
         </View>
@@ -161,7 +161,7 @@ export default function ConversationsScreen({ navigation }) {
             )}
             ListEmptyComponent={
               <View style={styles.emptyWrap}>
-                <Ionicons name="chatbubbles-outline" size={56} color="#D1D6D2" style={styles.emptyIcon} />
+                <Ionicons name="chatbubbles-outline" size={56} color={THEME.colors.textDisabled} style={styles.emptyIcon} />
                 <AppText variant="label" style={styles.emptyTitle}>No conversations yet</AppText>
                 <AppText variant="caption" color={THEME.colors.muted} style={styles.emptyHint}>
                   Search for people to start chatting.
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: THEME.colors.coral,
+    backgroundColor: THEME.colors.primary,
     borderWidth: 2,
     borderColor: THEME.colors.white,
   },

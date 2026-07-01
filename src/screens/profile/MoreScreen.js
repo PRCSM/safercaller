@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { PageWrapper } from '../../components/common/PageWrapper';
 import { AppText } from '../../components/common/AppText';
 import { Button } from '../../components/common/Button';
+import { TrustRing } from '../../components/common/TrustRing';
 import { THEME } from '../../constants/theme';
 import { STRINGS } from '../../constants/strings';
 import { haptics } from '../../constants/animations';
@@ -122,12 +123,9 @@ export default function MoreScreen({ navigation }) {
                 <AppText variant="caption" color={THEME.colors.muted} numberOfLines={1}>
                   {profile?.profession ?? 'Profession'}
                 </AppText>
-                <View style={styles.scorePill}>
-                  <AppText variant="caption" color={THEME.colors.primary} style={styles.scorePillText}>
-                    Score {profile?.reputationScore ?? 0}
-                  </AppText>
-                </View>
               </View>
+
+              <TrustRing score={profile?.reputationScore ?? 0} size={64} />
             </View>
 
             <View style={styles.verifyChips}>
@@ -151,7 +149,7 @@ export default function MoreScreen({ navigation }) {
           <Section iconName="person-outline" label={STRINGS.more.sections.account}>
             <Row
               iconName="star"
-              iconColor="#FBE74E"
+              iconColor={THEME.colors.trust.caution}
               label={STRINGS.more.items.premium}
               onPress={comingSoon('Premium upgrade')}
               right={<UpgradePill />}
@@ -162,7 +160,7 @@ export default function MoreScreen({ navigation }) {
               label="Messages"
               onPress={() => navigation.getParent()?.navigate('ChatStack', { screen: 'Conversations' })}
             />
-            <Row iconName="flag-outline" iconColor="#FF5A4D" label={STRINGS.more.items.complaints} onPress={comingSoon('My Complaints')} />
+            <Row iconName="flag-outline" iconColor={THEME.colors.trust.danger} label={STRINGS.more.items.complaints} onPress={comingSoon('My Complaints')} />
             <Row iconName="storefront-outline" iconColor={THEME.colors.primary} label={STRINGS.more.items.listings} onPress={comingSoon('My Listings')} />
             <Row
               iconName="lock-closed-outline"
@@ -197,7 +195,7 @@ export default function MoreScreen({ navigation }) {
           </Section>
 
           <Pressable onPress={onDeactivate} hitSlop={6} style={styles.deactivate}>
-            <AppText variant="caption" color={THEME.colors.coral}>
+            <AppText variant="caption" color={THEME.colors.trust.danger}>
               {STRINGS.more.deactivate}
             </AppText>
           </Pressable>

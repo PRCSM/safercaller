@@ -38,27 +38,27 @@ const FILTERS = [
 ];
 
 const RISK_BADGE = {
-  open:      { label: 'HIGH RISK', bg: THEME.colors.coral,   fg: THEME.colors.white, iconName: 'alert-circle', iconColor: '#fff' },
-  resolved:  { label: 'RESOLVED',  bg: THEME.colors.primary, fg: THEME.colors.white, iconName: 'checkmark-circle', iconColor: '#fff' },
-  reviewing: { label: 'REVIEWING', bg: THEME.colors.warning, fg: THEME.colors.text,  iconName: 'time', iconColor: '#000' },
+  open:      { label: 'HIGH RISK', bg: THEME.colors.trust.danger,  fg: THEME.colors.white, iconName: 'alert-circle', iconColor: '#fff' },
+  resolved:  { label: 'RESOLVED',  bg: THEME.colors.trust.safe,    fg: THEME.colors.white, iconName: 'checkmark-circle', iconColor: '#fff' },
+  reviewing: { label: 'REVIEWING', bg: THEME.colors.trust.caution, fg: THEME.colors.white, iconName: 'time', iconColor: '#fff' },
 };
 
 const STATUS_ACCENT = {
-  open:      THEME.colors.coral,
-  resolved:  THEME.colors.primary,
-  reviewing: THEME.colors.warning,
+  open:      THEME.colors.trust.danger,
+  resolved:  THEME.colors.trust.safe,
+  reviewing: THEME.colors.trust.caution,
 };
 
 const STATUS_PILL_BG = {
-  open:      'rgba(255,90,77,0.12)',
-  resolved:  'rgba(0,102,255,0.15)',
-  reviewing: 'rgba(251,231,78,0.25)',
+  open:      THEME.colors.trust.dangerSoft,
+  resolved:  THEME.colors.trust.safeSoft,
+  reviewing: THEME.colors.trust.cautionSoft,
 };
 
 const STATUS_PILL_TEXT = {
-  open:      THEME.colors.coral,
-  resolved:  THEME.colors.primary,
-  reviewing: THEME.colors.text,
+  open:      THEME.colors.trust.dangerText,
+  resolved:  THEME.colors.trust.safeText,
+  reviewing: THEME.colors.trust.cautionText,
 };
 
 export default function ScamHomeScreen({ navigation }) {
@@ -142,13 +142,13 @@ export default function ScamHomeScreen({ navigation }) {
 
         <View style={styles.locationLine}>
           <View style={styles.locationCluster}>
-            <Ionicons name="location-outline" size={14} color="#5A585A" />
+            <Ionicons name="location-outline" size={14} color={THEME.colors.textMuted} />
             <AppText variant="caption" color={THEME.colors.muted}>
               Search near: {location}
             </AppText>
           </View>
           <View style={styles.locationCluster}>
-            <Ionicons name="stats-chart-outline" size={14} color="#5A585A" />
+            <Ionicons name="stats-chart-outline" size={14} color={THEME.colors.textMuted} />
             <AppText variant="caption" color={THEME.colors.muted}>
               {searchResults.length} results
             </AppText>
@@ -209,7 +209,7 @@ function SearchBar({ value, focused, setFocused, onPressInput }) {
       onPress={onPressInput}
     >
       <Animated.View style={[styles.searchBar, animStyle]}>
-        <Ionicons name="search" size={20} color="#5A585A" style={{ marginRight: 8 }} />
+        <Ionicons name="search" size={20} color={THEME.colors.textMuted} style={{ marginRight: 8 }} />
         <View style={styles.searchInput}>
           <AppText variant="label" color={value ? THEME.colors.text : THEME.colors.muted}>
             {value || STRINGS.scam.searchPlaceholder}
@@ -317,12 +317,12 @@ function ResultCard({ report, index, onPress }) {
 
         <View style={styles.cardFooter}>
           <View style={styles.footerStats}>
-            <Ionicons name="document-text-outline" size={12} color="#5A585A" />
+            <Ionicons name="document-text-outline" size={12} color={THEME.colors.textMuted} />
             <AppText variant="caption" color={THEME.colors.muted}>
               {report.complaintCount ?? 0} complaints
             </AppText>
             <AppText variant="caption" color={THEME.colors.muted}>·</AppText>
-            <Ionicons name="star" size={12} color="#FBE74E" />
+            <Ionicons name="star" size={12} color={THEME.colors.trust.caution} />
             <AppText variant="caption" color={THEME.colors.muted}>
               Score {report.reputationScore ?? 0}
             </AppText>

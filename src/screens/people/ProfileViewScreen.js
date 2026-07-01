@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { PageWrapper } from '../../components/common/PageWrapper';
 import { AppText } from '../../components/common/AppText';
 import { Button } from '../../components/common/Button';
+import { TrustRing } from '../../components/common/TrustRing';
 import { SkeletonBox } from '../../components/common/Skeleton';
 import { THEME } from '../../constants/theme';
 import { haptics } from '../../constants/animations';
@@ -22,12 +23,6 @@ import { toast } from '../../utils/toast';
 
 const initialsFor = (name) =>
   (name ?? '?').trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
-
-const ringColorFor = (score) => {
-  if (score >= 700) return THEME.colors.primary;
-  if (score >= 400) return THEME.colors.warning;
-  return THEME.colors.coral;
-};
 
 export default function ProfileViewScreen({ navigation, route }) {
   const userId = route?.params?.userId;
@@ -134,7 +129,6 @@ export default function ProfileViewScreen({ navigation, route }) {
     );
   }
 
-  const ringColor = ringColorFor(profile.reputationScore ?? 900);
   const isOffline = profile.goOnline === false;
 
   return (
@@ -167,8 +161,8 @@ export default function ProfileViewScreen({ navigation, route }) {
 
           {isOffline && (
             <View style={styles.offlineBanner}>
-              <Ionicons name="eye-off-outline" size={14} color="#000" />
-              <AppText variant="caption" color={THEME.colors.text} style={{ marginLeft: 6 }}>
+              <Ionicons name="eye-off-outline" size={14} color={THEME.colors.trust.caution} />
+              <AppText variant="caption" color={THEME.colors.trust.cautionText} style={{ marginLeft: 6 }}>
                 This user is not discoverable.
               </AppText>
             </View>
@@ -184,7 +178,7 @@ export default function ProfileViewScreen({ navigation, route }) {
             )}
             {!!profile.location && (
               <View style={styles.locationRow}>
-                <Ionicons name="location-outline" size={14} color="#5A585A" />
+                <Ionicons name="location-outline" size={14} color={THEME.colors.textMuted} />
                 <AppText variant="caption" color={THEME.colors.muted}>{profile.location}</AppText>
               </View>
             )}
@@ -198,7 +192,7 @@ export default function ProfileViewScreen({ navigation, route }) {
             <View style={styles.scoreCard}>
               <View style={{ flex: 1 }}>
                 <View style={styles.trustLabel}>
-                  <Ionicons name="star" size={12} color="#FBE74E" />
+                  <Ionicons name="star" size={12} color={THEME.colors.trust.caution} />
                   <AppText variant="caption" color={THEME.colors.muted}>Trust Score</AppText>
                 </View>
                 <AppText variant="heading" style={styles.scoreNumber}>
@@ -208,17 +202,13 @@ export default function ProfileViewScreen({ navigation, route }) {
                   Based on community reports and activity
                 </AppText>
               </View>
-              <View style={[styles.scoreRing, { borderColor: ringColor }]}>
-                <AppText variant="caption" style={styles.scoreRingText}>
-                  {profile.reputationScore ?? 900}
-                </AppText>
-              </View>
+              <TrustRing score={profile.reputationScore ?? 900} size={72} showScore={false} />
             </View>
 
             <View style={styles.divider} />
 
             <View style={styles.sectionLabelRow}>
-              <Ionicons name="storefront-outline" size={16} color="#000" />
+              <Ionicons name="storefront-outline" size={16} color={THEME.colors.textPrimary} />
               <AppText variant="label" style={styles.sectionLabel}>Listings by this user</AppText>
             </View>
             {listings.length === 0 ? (
@@ -332,7 +322,7 @@ const styles = StyleSheet.create({
   offlineBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(251,231,78,0.25)',
+    backgroundColor: THEME.colors.trust.cautionSoft,
     paddingVertical: 8,
     paddingHorizontal: 20,
     marginTop: 52,
