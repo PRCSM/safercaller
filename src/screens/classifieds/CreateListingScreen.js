@@ -198,7 +198,7 @@ export default function CreateListingScreen({ navigation }) {
         >
           <View style={styles.header}>
             <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.headerBack}>
-              <Ionicons name="arrow-back" size={22} color="#000" />
+              <Ionicons name="arrow-back" size={22} color={THEME.colors.textPrimary} />
             </Pressable>
             <AppText variant="label" style={styles.headerTitle}>
               {STRINGS.classifieds.createTitle}
@@ -310,7 +310,7 @@ export default function CreateListingScreen({ navigation }) {
             </View>
 
             <View style={styles.expiryBanner}>
-              <Ionicons name="time-outline" size={20} color="#5A585A" />
+              <Ionicons name="time-outline" size={20} color={THEME.colors.trust.caution} />
               <AppText variant="caption" color={THEME.colors.muted} style={{ flex: 1 }}>
                 {STRINGS.classifieds.autoExpireNote}
               </AppText>
@@ -397,7 +397,7 @@ function MediaRow({ media, onAdd, onRemove }) {
     >
       <Pressable onPress={onAdd}>
         <View style={styles.mediaEmpty}>
-          <Ionicons name="camera-outline" size={24} color="#5A585A" />
+          <Ionicons name="camera-outline" size={24} color={THEME.colors.textMuted} />
           <AppText variant="caption" color={THEME.colors.muted} style={{ fontSize: 11 }}>
             Add Photos
           </AppText>
@@ -492,7 +492,7 @@ function PickerField({ label, value, options, onChange, disabled }) {
           <AppText variant="label" color={value ? THEME.colors.text : THEME.colors.border}>
             {value || 'Select…'}
           </AppText>
-          <Ionicons name="chevron-down" size={18} color="#5A585A" />
+          <Ionicons name="chevron-down" size={18} color={THEME.colors.textMuted} />
         </View>
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -571,7 +571,7 @@ function TagsField({ tags, input, setInput, onCommit, onRemove }) {
   return (
     <View style={styles.field}>
       <View style={styles.fieldLabelRow}>
-        <Ionicons name="pricetag-outline" size={12} color="#5A585A" />
+        <Ionicons name="pricetag-outline" size={12} color={THEME.colors.textMuted} />
         <AppText variant="caption" color={THEME.colors.muted} style={styles.fieldLabel}>
           {STRINGS.classifieds.labels.tags.toUpperCase()}
         </AppText>
@@ -625,7 +625,7 @@ function TagChip({ value, onRemove }) {
     <Animated.View style={[styles.tagChip, style]}>
       <AppText variant="caption" style={{ fontSize: 12 }}>{value}</AppText>
       <Pressable onPress={handleRemove} hitSlop={4} style={{ marginLeft: 4 }}>
-        <Ionicons name="close" size={12} color="#5A585A" />
+        <Ionicons name="close" size={12} color={THEME.colors.textMuted} />
       </Pressable>
     </Animated.View>
   );
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#ECEFEC',
+    backgroundColor: THEME.colors.subtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -814,10 +814,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: 'rgba(251,190,36,0.1)',
+    backgroundColor: THEME.colors.trust.cautionSoft,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: THEME.colors.warning,
+    borderColor: THEME.colors.trust.caution,
     padding: 14,
     paddingHorizontal: 16,
   },

@@ -176,7 +176,7 @@ export default function ProfileSetupScreen({ navigation, route }) {
             <View style={styles.topBar}>
               <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
                 <View style={styles.backButton}>
-                  <Ionicons name="arrow-back" size={22} color="#000" />
+                  <Ionicons name="arrow-back" size={22} color={THEME.colors.textPrimary} />
                 </View>
               </Pressable>
               <View style={styles.progressDots}>
@@ -207,7 +207,7 @@ export default function ProfileSetupScreen({ navigation, route }) {
                   {photoUri ? (
                     <PhotoPreview uri={photoUri} />
                   ) : (
-                    <Ionicons name="camera-outline" size={32} color="#5A585A" />
+                    <Ionicons name="camera-outline" size={32} color={THEME.colors.textMuted} />
                   )}
                 </View>
               </Pressable>
@@ -471,7 +471,7 @@ function FloatingDateField({ label, value, onChange }) {
           <AppText variant="label" color={value ? THEME.colors.text : 'transparent'}>
             {value || '—'}
           </AppText>
-          <Ionicons name="calendar-outline" size={18} color="#5A585A" />
+          <Ionicons name="calendar-outline" size={18} color={THEME.colors.textMuted} />
         </View>
       </Pressable>
 
@@ -560,7 +560,7 @@ function PickerField({ label, value, options, onChange, badge, disabled }) {
                 <AppText variant="caption" style={styles.aiBadgeText}>{badge}</AppText>
               </View>
             )}
-            <Ionicons name="chevron-down" size={18} color="#5A585A" />
+            <Ionicons name="chevron-down" size={18} color={THEME.colors.textMuted} />
           </View>
         </View>
       </Pressable>

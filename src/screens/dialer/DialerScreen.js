@@ -16,6 +16,7 @@ import { AppText } from '../../components/common/AppText';
 import { THEME } from '../../constants/theme';
 import { STRINGS } from '../../constants/strings';
 import { haptics, springs } from '../../constants/animations';
+import { getTrustTier } from '../../utils/trust';
 import { useAuthStore } from '../../store/authStore';
 import { useDialerStore } from '../../store/dialerStore';
 import { scamService } from '../../services';
@@ -50,10 +51,10 @@ const last4 = (num) => {
 const initialsFor = (name) =>
   (name ?? '?').trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
 
-const tierFor = (score) =>
-  score >= 700 ? { label: 'Good', color: '#0066FF' } :
-  score >= 400 ? { label: 'Fair', color: '#C68E00' } :
-                 { label: 'Low',  color: '#FF5A4D' };
+// Friendly labels for the user's OWN score (the trust spectrum's generic
+// "Trusted/Neutral/High risk" reads oddly about yourself). Colour + icon still
+// come from the shared trust model so the whole app stays consistent.
+const OWN_SCORE_LABEL = { safe: 'Good', caution: 'Fair', danger: 'Low' };
 
 export default function DialerScreen({ navigation }) {
   const profile = useAuthStore((s) => s.profile);
@@ -66,7 +67,8 @@ export default function DialerScreen({ navigation }) {
   const setCurrentNumberRaw = useDialerStore.setState;
 
   const score = profile?.reputationScore ?? 0;
-  const tier = tierFor(score);
+  const tier = getTrustTier(score);
+  const tierLabel = OWN_SCORE_LABEL[tier.key];
   const missedCount = callLogs.filter((l) => l.status === 'missed').length;
   const blockedToday = callLogs.filter(
     (l) => l.status === 'flagged' || l.status === 'scamBlocked'
@@ -128,29 +130,29 @@ export default function DialerScreen({ navigation }) {
         </AppText>
         <View style={styles.topActions}>
           <Pressable onPress={() => toast.info('Search coming soon')} style={styles.iconButton} hitSlop={6}>
-            <Ionicons name="search" size={18} color="#5A585A" />
+            <Ionicons name="search" size={18} color={THEME.colors.textSecondary} />
           </Pressable>
           <Pressable
             onPress={() => toast.info('Notifications coming soon')}
             style={[styles.iconButton, { marginLeft: 8 }]}
             hitSlop={6}
           >
-            <Ionicons name="notifications-outline" size={18} color="#5A585A" />
+            <Ionicons name="notifications-outline" size={18} color={THEME.colors.textSecondary} />
             {missedCount > 0 && <View style={styles.bellBadge} />}
           </Pressable>
         </View>
       </View>
 
-      {/* ── INLINE TRUST PILL ── */}
-      <View style={styles.trustPill}>
+      {/* ── INLINE TRUST CHIP ── */}
+      <View style={[styles.trustPill, { backgroundColor: tier.soft, borderColor: tier.soft }]}>
         <View style={styles.trustLeft}>
-          <View style={[styles.tierDot, { backgroundColor: tier.color }]} />
+          <Ionicons name={tier.icon} size={14} color={tier.color} />
           <AppText style={styles.trustLabel}>TRUST</AppText>
           <AppText style={styles.trustScore}>{score}</AppText>
-          <AppText style={[styles.tierLabel, { color: tier.color }]}>{tier.label}</AppText>
+          <AppText style={[styles.tierLabel, { color: tier.color }]}>{tierLabel}</AppText>
         </View>
         <View style={styles.trustRight}>
-          <Ionicons name="shield-checkmark" size={12} color="#22C55E" />
+          <Ionicons name="shield-checkmark" size={12} color={THEME.colors.trust.safe} />
           <AppText style={styles.trustStat}>
             {blockedToday} blocked today
           </AppText>
@@ -171,7 +173,7 @@ export default function DialerScreen({ navigation }) {
           <LastCallCard log={recentCalls[0]} onPress={() => handleRecentTap(recentCalls[0])} />
         ) : (
           <View style={styles.firstTimeWrap}>
-            <Ionicons name="keypad" size={20} color="#D1D6D2" />
+            <Ionicons name="keypad" size={20} color={THEME.colors.border} />
             <AppText style={styles.firstTimeHint}>Tap a number to dial</AppText>
           </View>
         )}
@@ -221,7 +223,7 @@ export default function DialerScreen({ navigation }) {
         />
         <CallButton onPress={handleCallPress} />
         <Pressable onPress={openRecents} style={styles.actionSide} hitSlop={6}>
-          <Ionicons name="time-outline" size={22} color="#5A585A" />
+          <Ionicons name="time-outline" size={22} color={THEME.colors.textSecondary} />
         </Pressable>
       </View>
     </SafeAreaView>
@@ -232,9 +234,9 @@ export default function DialerScreen({ navigation }) {
 
 function LastCallCard({ log, onPress }) {
   const dirIcon =
-    log.status === 'missed'    ? { name: 'call-outline',       color: '#FF5A4D' } :
-    log.direction === 'inbound' ? { name: 'arrow-down-circle',  color: '#22C55E' } :
-                                  { name: 'arrow-up-circle',    color: '#0066FF' };
+    log.status === 'missed'    ? { name: 'call-outline',       color: THEME.colors.trust.danger } :
+    log.direction === 'inbound' ? { name: 'arrow-down-circle',  color: THEME.colors.trust.safe } :
+                                  { name: 'arrow-up-circle',    color: THEME.colors.primary };
   const when = log.createdAt
     ? formatDistanceToNowStrict(
         log.createdAt instanceof Date ? log.createdAt : new Date(log.createdAt),
@@ -301,7 +303,7 @@ function DialKey({ digit, sub, onPress }) {
 
   const buttonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    backgroundColor: bgDarken.value > 0.5 ? '#E5E5E5' : '#F2F2F2',
+    backgroundColor: bgDarken.value > 0.5 ? THEME.colors.subtle : THEME.colors.surfaceAlt,
   }));
 
   const isSpecial = digit === '*' || digit === '#';
@@ -390,7 +392,7 @@ function BackspaceButton({ onPress, onLongPress, visible }) {
       pointerEvents={visible ? 'auto' : 'none'}
     >
       <Animated.View style={animStyle}>
-        <Ionicons name="backspace-outline" size={24} color="#5A585A" />
+        <Ionicons name="backspace-outline" size={24} color={THEME.colors.textSecondary} />
       </Animated.View>
     </Pressable>
   );
@@ -399,7 +401,7 @@ function BackspaceButton({ onPress, onLongPress, visible }) {
 /* ─────────────────────────────  Styles  ───────────────────────────── */
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FFFFFF' },
+  root: { flex: 1, backgroundColor: THEME.colors.background },
 
   /* Top bar */
   topBar: {
@@ -412,7 +414,7 @@ const styles = StyleSheet.create({
   wordmark: {
     fontSize: 17,
     fontFamily: THEME.typography.fontFamily.semibold,
-    color: '#000',
+    color: THEME.colors.textPrimary,
     letterSpacing: 0.4,
   },
   wordmarkBlue: { color: THEME.colors.primary },
@@ -421,7 +423,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#F2F2F2',
+    backgroundColor: THEME.colors.surfaceAlt,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -432,12 +434,12 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#FF5A4D',
+    backgroundColor: THEME.colors.trust.danger,
     borderWidth: 1.5,
-    borderColor: '#fff',
+    borderColor: THEME.colors.white,
   },
 
-  /* Trust pill — inline horizontal info bar */
+  /* Trust chip — inline horizontal info bar */
   trustPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -446,27 +448,20 @@ const styles = StyleSheet.create({
     marginTop: 4,
     height: 36,
     paddingHorizontal: 14,
-    backgroundColor: '#F9FAF9',
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#ECEFEC',
   },
   trustLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  tierDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
   trustLabel: {
     fontSize: 9,
     fontFamily: THEME.typography.fontFamily.medium,
-    color: '#5A585A',
+    color: THEME.colors.textMuted,
     letterSpacing: 1.4,
   },
   trustScore: {
     fontSize: 15,
     fontFamily: THEME.typography.fontFamily.semibold,
-    color: '#000',
+    color: THEME.colors.textPrimary,
     marginLeft: 2,
   },
   tierLabel: {
@@ -478,7 +473,7 @@ const styles = StyleSheet.create({
   trustStat: {
     fontSize: 11,
     fontFamily: THEME.typography.fontFamily.medium,
-    color: '#5A585A',
+    color: THEME.colors.textSecondary,
   },
 
   /* Smart display area — number when typing, last-call card when empty */
@@ -492,7 +487,7 @@ const styles = StyleSheet.create({
   numberText: {
     fontSize: 36,
     fontFamily: THEME.typography.fontFamily.semibold,
-    color: '#000',
+    color: THEME.colors.textPrimary,
     letterSpacing: 1.2,
     textAlign: 'center',
   },
@@ -506,7 +501,7 @@ const styles = StyleSheet.create({
   firstTimeHint: {
     fontSize: 14,
     fontFamily: THEME.typography.fontFamily.medium,
-    color: '#D1D6D2',
+    color: THEME.colors.textDisabled,
   },
 
   /* Last call card */
@@ -517,10 +512,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
     paddingHorizontal: 14,
-    backgroundColor: '#F9FAF9',
+    backgroundColor: THEME.colors.surface,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#ECEFEC',
+    borderColor: THEME.colors.hairline,
   },
   lastCallLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   lastCallAvatar: {
@@ -533,19 +528,19 @@ const styles = StyleSheet.create({
   lastCallInitials: {
     fontSize: 13,
     fontFamily: THEME.typography.fontFamily.semibold,
-    color: '#fff',
+    color: THEME.colors.white,
   },
   lastCallRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   lastCallName: {
     fontSize: 14,
     fontFamily: THEME.typography.fontFamily.semibold,
-    color: '#000',
+    color: THEME.colors.textPrimary,
     flexShrink: 1,
   },
   lastCallTime: {
     fontSize: 11,
     fontFamily: THEME.typography.fontFamily.medium,
-    color: '#5A585A',
+    color: THEME.colors.textMuted,
     marginTop: 2,
   },
   lastCallCta: {
@@ -575,12 +570,12 @@ const styles = StyleSheet.create({
   recentInitials: {
     fontSize: 13,
     fontFamily: THEME.typography.fontFamily.semibold,
-    color: '#fff',
+    color: THEME.colors.white,
   },
   recentLabel: {
     fontSize: 10,
     fontFamily: THEME.typography.fontFamily.medium,
-    color: '#5A585A',
+    color: THEME.colors.textMuted,
     marginTop: 4,
     textAlign: 'center',
   },
@@ -602,21 +597,21 @@ const styles = StyleSheet.create({
   key: {
     flex: 1,
     borderRadius: 34,
-    backgroundColor: '#F2F2F2',
+    backgroundColor: THEME.colors.surfaceAlt,
     alignItems: 'center',
     justifyContent: 'center',
   },
   keyDigit: {
     fontSize: 26,
     fontFamily: THEME.typography.fontFamily.semibold,
-    color: '#000',
+    color: THEME.colors.textPrimary,
     lineHeight: 30,
   },
   keyDigitSpecial: { fontSize: 22, fontWeight: '400' },
   keySub: {
     fontSize: 9,
     letterSpacing: 1.4,
-    color: '#888',
+    color: THEME.colors.textMuted,
     fontFamily: THEME.typography.fontFamily.medium,
     marginTop: 1,
   },

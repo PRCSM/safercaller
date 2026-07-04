@@ -200,7 +200,7 @@ export default function VerificationScreen({ navigation, route }) {
           <View style={styles.topBar}>
             <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
               <View style={styles.backButton}>
-                <Ionicons name="arrow-back" size={22} color="#000" />
+                <Ionicons name="arrow-back" size={22} color={THEME.colors.textPrimary} />
               </View>
             </Pressable>
           </View>
@@ -225,7 +225,7 @@ export default function VerificationScreen({ navigation, route }) {
           </View>
 
           <View style={styles.infoBox}>
-            <Ionicons name="lock-closed-outline" size={16} color="#5A585A" style={styles.infoIcon} />
+            <Ionicons name="lock-closed-outline" size={16} color={THEME.colors.textMuted} style={styles.infoIcon} />
             <AppText variant="caption" color={THEME.colors.muted} style={{ flex: 1 }}>
               {STRINGS.verification.encryptedNote}
             </AppText>
@@ -338,7 +338,7 @@ function VerifyCard({ iconName, title, sub, status, onStart, registerBounce }) {
     <Animated.View style={[styles.card, cardStyle]}>
       <View style={styles.cardRow}>
         <View style={styles.cardIcon}>
-          <Ionicons name={iconName} size={24} color="#5A585A" />
+          <Ionicons name={iconName} size={24} color={THEME.colors.textMuted} />
         </View>
         <View style={{ flex: 1 }}>
           <AppText variant="label" style={styles.cardTitle}>{title}</AppText>
@@ -352,7 +352,7 @@ function VerifyCard({ iconName, title, sub, status, onStart, registerBounce }) {
         ) : (
           <View style={styles.checkmarkWrap}>
             <Animated.View style={checkStyle}>
-              <Ionicons name="checkmark-circle" size={26} color="#22C55E" />
+              <Ionicons name="checkmark-circle" size={26} color={THEME.colors.trust.safe} />
             </Animated.View>
           </View>
         )}

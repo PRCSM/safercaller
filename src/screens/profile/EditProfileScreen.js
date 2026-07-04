@@ -170,7 +170,7 @@ export default function EditProfileScreen({ navigation }) {
         >
           <View style={styles.topBar}>
             <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={22} color="#000" />
+              <Ionicons name="arrow-back" size={22} color={THEME.colors.textPrimary} />
             </Pressable>
             <AppText variant="label" style={styles.topTitle}>Edit Profile</AppText>
             <Button
@@ -336,7 +336,7 @@ function FloatingDateField({ label, value, onChange }) {
           <AppText variant="label" color={value ? THEME.colors.text : 'transparent'}>
             {value || '—'}
           </AppText>
-          <Ionicons name="calendar-outline" size={18} color="#5A585A" />
+          <Ionicons name="calendar-outline" size={18} color={THEME.colors.textMuted} />
         </View>
       </Pressable>
 
@@ -393,7 +393,7 @@ function PickerField({ label, value, options, onChange }) {
           <AppText variant="label" color={value ? THEME.colors.text : 'transparent'}>
             {value || '—'}
           </AppText>
-          <Ionicons name="chevron-down" size={18} color="#5A585A" />
+          <Ionicons name="chevron-down" size={18} color={THEME.colors.textMuted} />
         </View>
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
   photoWrap: { alignItems: 'center', gap: 6, marginTop: 8 },
   photoCircle: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: '#9DC4F5',
+    backgroundColor: THEME.colors.accentBlue,
     alignItems: 'center', justifyContent: 'center',
     overflow: 'hidden',
   },

@@ -4,36 +4,64 @@ import { THEME } from '../../constants/theme';
 /**
  * Typed text primitive — the single way to render text in the app.
  *
- * Variants map to (fontFamily, fontSize) pairs from THEME:
- *   display  → SemiBold, 48px   (hero / brand wordmark)
- *   heading  → Medium,   26px   (section headers, card titles)
- *   body     → Medium,   16px   (paragraph copy)
- *   label    → Medium,   14px   (buttons, form labels, tabs)
- *   caption  → Medium,   11px   (metadata, hints, helper text)
+ * Variants map to (fontFamily, fontSize, lineHeight, letterSpacing) from THEME:
+ *   display  → SemiBold, 44/48   (hero / brand wordmark)
+ *   heading  → SemiBold, 26/32   (screen + section headers)
+ *   title    → SemiBold, 20/28   (card titles, list group heads)   [NEW]
+ *   body     → Medium,   16/24   (paragraph copy)
+ *   label    → Medium,   14/20   (buttons, form labels, tabs)
+ *   caption  → Medium,   12/16   (metadata, hints, helper text)
+ *   overline → Medium,   10/14   (all-caps eyebrows, wide-tracked) [NEW]
  *
- * Color defaults to THEME.colors.text. Pass `color="..."` to override,
- * or pass any style via `style` to override per-instance.
+ * Color defaults to THEME.colors.textPrimary. Pass `color="..."` to override,
+ * or any `style` to override per-instance (style wins, so existing screens
+ * that set their own fontSize/lineHeight keep working unchanged).
  */
+const { sizes, lineHeights, letterSpacing, fontFamily } = THEME.typography;
+
 const VARIANT_STYLES = {
   display: {
-    fontFamily: THEME.typography.fontFamily.semibold,
-    fontSize: THEME.typography.sizes.display,
+    fontFamily: fontFamily.semibold,
+    fontSize: sizes.display,
+    lineHeight: lineHeights.display,
+    letterSpacing: letterSpacing.tight,
   },
   heading: {
-    fontFamily: THEME.typography.fontFamily.medium,
-    fontSize: THEME.typography.sizes.xxl,
+    fontFamily: fontFamily.semibold,
+    fontSize: sizes.xxl,
+    lineHeight: lineHeights.xxl,
+    letterSpacing: letterSpacing.tight,
+  },
+  title: {
+    fontFamily: fontFamily.semibold,
+    fontSize: sizes.title,
+    lineHeight: lineHeights.title,
+    letterSpacing: letterSpacing.normal,
   },
   body: {
-    fontFamily: THEME.typography.fontFamily.medium,
-    fontSize: THEME.typography.sizes.lg,
+    fontFamily: fontFamily.medium,
+    fontSize: sizes.lg,
+    lineHeight: lineHeights.lg,
+    letterSpacing: letterSpacing.normal,
   },
   label: {
-    fontFamily: THEME.typography.fontFamily.medium,
-    fontSize: THEME.typography.sizes.md,
+    fontFamily: fontFamily.medium,
+    fontSize: sizes.md,
+    lineHeight: lineHeights.md,
+    letterSpacing: letterSpacing.normal,
   },
   caption: {
-    fontFamily: THEME.typography.fontFamily.medium,
-    fontSize: THEME.typography.sizes.sm,
+    fontFamily: fontFamily.medium,
+    fontSize: sizes.sm,
+    lineHeight: lineHeights.sm,
+    letterSpacing: letterSpacing.normal,
+  },
+  overline: {
+    fontFamily: fontFamily.medium,
+    fontSize: sizes.xs,
+    lineHeight: lineHeights.xs,
+    letterSpacing: letterSpacing.wider,
+    textTransform: 'uppercase',
   },
 };
 
@@ -42,7 +70,7 @@ export function AppText({ variant = 'body', color, style, children, ...rest }) {
   return (
     <Text
       style={[
-        { color: THEME.colors.text },
+        { color: THEME.colors.textPrimary },
         variantStyle,
         color ? { color } : null,
         style,

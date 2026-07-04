@@ -16,6 +16,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { AppText } from '../../components/common/AppText';
+import { TrustRing } from '../../components/common/TrustRing';
 import { THEME } from '../../constants/theme';
 import { STRINGS } from '../../constants/strings';
 import { haptics } from '../../constants/animations';
@@ -239,7 +240,7 @@ export default function IncomingCallScreen({ navigation, route }) {
 
   /* ─────────────────  Variant colors  ───────────────── */
   const avatarBg =
-    variant === 'flagged' ? THEME.colors.coral :
+    variant === 'flagged' ? THEME.colors.trust.danger :
     variant === 'safe'    ? THEME.colors.primary :
                             THEME.colors.muted;
 
@@ -276,9 +277,21 @@ export default function IncomingCallScreen({ navigation, route }) {
         </AppText>
 
         {isFlagged && (
+          <View style={styles.trustRingWrap}>
+            <TrustRing
+              score={lookup?.score ?? 0}
+              size={88}
+              label={null}
+              centerColor={THEME.colors.white}
+              trackColor="rgba(255,255,255,0.14)"
+            />
+          </View>
+        )}
+
+        {isFlagged && (
           <Animated.View style={[styles.alert, alertStyle]}>
             <Animated.View style={[styles.alertBorder, borderStyle]} />
-            <AppText variant="label" color={THEME.colors.coral}>
+            <AppText variant="label" color={THEME.colors.trust.danger}>
               FLAGGED — {lookup?.count ?? 0} scam reports
             </AppText>
             <AppText variant="caption" color="rgba(255,255,255,0.55)">
@@ -322,8 +335,8 @@ export default function IncomingCallScreen({ navigation, route }) {
           <Animated.View style={blockStyle}>
             <ActionButton
               label={STRINGS.incomingCall.block}
-              bg="rgba(255,90,77,0.2)"
-              borderColor={THEME.colors.coral}
+              bg="rgba(217,58,63,0.2)"
+              borderColor={THEME.colors.trust.danger}
               iconName="ban-outline"
               onPress={onBlock}
             />
@@ -331,7 +344,7 @@ export default function IncomingCallScreen({ navigation, route }) {
           <Animated.View style={declineStyle}>
             <ActionButton
               label={STRINGS.incomingCall.decline}
-              bg={THEME.colors.coral}
+              bg={THEME.colors.trust.danger}
               iconName="close"
               big
               onPress={onDecline}
@@ -399,12 +412,16 @@ const styles = StyleSheet.create({
   },
   flagOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: THEME.colors.coral,
+    backgroundColor: THEME.colors.trust.danger,
   },
   topLabel: { marginBottom: THEME.spacing.md },
   topLabelText: {
     fontSize: 12,
     letterSpacing: 3,
+  },
+  trustRingWrap: {
+    marginTop: THEME.spacing.lg,
+    alignItems: 'center',
   },
 
   avatarWrap: {
@@ -439,7 +456,7 @@ const styles = StyleSheet.create({
 
   alert: {
     width: '100%',
-    backgroundColor: 'rgba(255,90,77,0.15)',
+    backgroundColor: 'rgba(217,58,63,0.15)',
     borderRadius: 12,
     padding: THEME.spacing.md,
     marginTop: THEME.spacing.lg,
@@ -452,7 +469,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 4,
-    backgroundColor: THEME.colors.coral,
+    backgroundColor: THEME.colors.trust.danger,
   },
   pillRow: {
     flexDirection: 'row',

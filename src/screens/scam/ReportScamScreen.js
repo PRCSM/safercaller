@@ -183,7 +183,7 @@ export default function ReportScamScreen({ navigation }) {
         >
           <View style={styles.header}>
             <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.headerBack}>
-              <Ionicons name="arrow-back" size={22} color="#000" />
+              <Ionicons name="arrow-back" size={22} color={THEME.colors.textPrimary} />
             </Pressable>
             <AppText variant="label" style={styles.headerTitle}>
               {STRINGS.scam.reportTitle}
@@ -195,7 +195,7 @@ export default function ReportScamScreen({ navigation }) {
             keyboardShouldPersistTaps="handled"
           >
             <StaggerBlock index={0} style={styles.warningBanner}>
-              <Ionicons name="warning-outline" size={20} color="#FBE74E" />
+              <Ionicons name="warning-outline" size={20} color={THEME.colors.trust.caution} />
               <AppText variant="caption" color={THEME.colors.muted} style={{ flex: 1 }}>
                 {STRINGS.scam.warningBanner}
               </AppText>
@@ -267,7 +267,7 @@ export default function ReportScamScreen({ navigation }) {
 
             <StaggerBlock index={8} style={styles.section}>
               <View style={styles.fieldLabelRow}>
-                <Ionicons name="link-outline" size={12} color="#5A585A" />
+                <Ionicons name="link-outline" size={12} color={THEME.colors.textMuted} />
                 <AppText variant="caption" color={THEME.colors.muted} style={styles.fieldLabel}>
                   {STRINGS.scam.labels.socialLinks.toUpperCase()}
                 </AppText>
@@ -321,7 +321,7 @@ export default function ReportScamScreen({ navigation }) {
                   return (
                     <Pressable key={`empty-${i}`} onPress={addProof}>
                       <View style={styles.emptySlot}>
-                        <Ionicons name="camera-outline" size={22} color="#5A585A" />
+                        <Ionicons name="camera-outline" size={22} color={THEME.colors.textMuted} />
                         <Ionicons name="add" size={20} color={THEME.colors.border} />
                       </View>
                     </Pressable>
@@ -441,7 +441,7 @@ function PickerField({ label, value, options, onChange }) {
         <AppText variant="label" color={value ? THEME.colors.text : THEME.colors.border}>
           {value || 'Select…'}
         </AppText>
-        <Ionicons name="chevron-down" size={18} color="#5A585A" />
+        <Ionicons name="chevron-down" size={18} color={THEME.colors.textMuted} />
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -493,7 +493,7 @@ function SocialLinkChip({ value, onRemove }) {
         {value}
       </AppText>
       <Pressable onPress={handleRemove} hitSlop={6} style={{ marginLeft: 4 }}>
-        <Ionicons name="close" size={14} color="#5A585A" />
+        <Ionicons name="close" size={14} color={THEME.colors.textMuted} />
       </Pressable>
     </Animated.View>
   );
@@ -573,10 +573,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: 'rgba(251,190,36,0.12)',
+    backgroundColor: THEME.colors.trust.cautionSoft,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: THEME.colors.warning,
+    borderColor: THEME.colors.trust.caution,
     padding: 12,
   },
   warningEmoji: {
@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#ECEFEC',
+    backgroundColor: THEME.colors.subtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -706,7 +706,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: THEME.colors.success,
+    backgroundColor: THEME.colors.trust.safe,
     alignItems: 'center',
     justifyContent: 'center',
   },

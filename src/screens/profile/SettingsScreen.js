@@ -116,7 +116,7 @@ export default function SettingsScreen({ navigation }) {
       <PageWrapper>
         <View style={styles.topBar}>
           <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={22} color="#000" />
+            <Ionicons name="arrow-back" size={22} color={THEME.colors.textPrimary} />
           </Pressable>
           <AppText variant="label" style={styles.topTitle}>Settings</AppText>
           <View style={{ width: 40 }} />
@@ -186,7 +186,7 @@ export default function SettingsScreen({ navigation }) {
                       <View style={styles.blockedRow}>
                         <AppText variant="label" style={{ flex: 1 }}>{item}</AppText>
                         <Pressable hitSlop={6} onPress={() => onUnblock(item)}>
-                          <AppText variant="caption" color={THEME.colors.coral}>Unblock</AppText>
+                          <AppText variant="caption" color={THEME.colors.trust.danger}>Unblock</AppText>
                         </Pressable>
                       </View>
                     )}
@@ -233,9 +233,9 @@ export default function SettingsScreen({ navigation }) {
             />
             <Row
               iconName="warning-outline"
-              iconColor={THEME.colors.coral}
+              iconColor={THEME.colors.trust.danger}
               label="Delete Account"
-              labelColor={THEME.colors.coral}
+              labelColor={THEME.colors.trust.danger}
               onPress={onDeleteAccount}
             />
           </Section>

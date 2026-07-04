@@ -26,6 +26,7 @@ import Animated, {
 import { PageWrapper } from '../../components/common/PageWrapper';
 import { AppText } from '../../components/common/AppText';
 import { Button } from '../../components/common/Button';
+import { TrustBadge } from '../../components/common/TrustBadge';
 import { CardSkeleton } from '../../components/common/Skeleton';
 import { classifiedsService } from '../../services';
 import { useAuthStore } from '../../store/authStore';
@@ -33,6 +34,7 @@ import { useClassifiedsStore } from '../../store/classifiedsStore';
 import { THEME } from '../../constants/theme';
 import { STRINGS } from '../../constants/strings';
 import { haptics, springs } from '../../constants/animations';
+import { getTrustTier } from '../../utils/trust';
 import { toast } from '../../utils/toast';
 
 const CATEGORIES = [
@@ -207,7 +209,7 @@ export default function ClassifiedsFeedScreen({ navigation }) {
 
         <View style={styles.locationRow}>
           <View style={styles.nearLabelRow}>
-            <Ionicons name="location-outline" size={14} color="#000" />
+            <Ionicons name="location-outline" size={14} color={THEME.colors.textPrimary} />
             <AppText variant="caption" style={styles.nearLabel}>
               {STRINGS.classifieds.nearYou} — {location}
             </AppText>
@@ -336,11 +338,11 @@ function SearchBar({ value, onChange, focused, setFocused, isRecording, onMicPre
     opacity: pulseOpacity.value,
   }));
 
-  const micBg = isRecording ? THEME.colors.coral : THEME.colors.primary;
+  const micBg = isRecording ? THEME.colors.trust.danger : THEME.colors.primary;
 
   return (
     <Animated.View style={[styles.searchBar, barStyle]}>
-      <Ionicons name="search" size={20} color="#5A585A" style={{ marginRight: 8 }} />
+      <Ionicons name="search" size={20} color={THEME.colors.textMuted} style={{ marginRight: 8 }} />
       <TextInput
         value={value}
         onChangeText={onChange}
@@ -394,7 +396,7 @@ function CategoryChip({ label, iconName, index, active, onPress }) {
     backgroundColor: interpolateColor(
       colorProgress.value,
       [0, 1],
-      [THEME.colors.subtle, THEME.colors.dark]
+      [THEME.colors.subtle, THEME.colors.primary]
     ),
   }));
 
@@ -443,12 +445,8 @@ function ListingCard({ item, index, scrollY, bgColor, onPress }) {
     ? { label: 'Service', bg: THEME.colors.dark, fg: THEME.colors.white }
     : { label: item.condition ?? 'New', bg: THEME.colors.warning, fg: THEME.colors.text };
 
-  const safety =
-    item.sellerScore > 500
-      ? { label: 'Safe', bg: 'rgba(0,102,255,0.1)', fg: THEME.colors.primary, iconName: 'shield-checkmark', iconColor: THEME.colors.primary }
-      : item.sellerScore < 200
-        ? { label: 'Flagged', bg: 'rgba(255,90,77,0.1)', fg: THEME.colors.coral, iconName: 'alert-circle', iconColor: THEME.colors.coral }
-        : null;
+  const sellerTier = getTrustTier(item.sellerScore ?? 0);
+  const showSafety = item.sellerScore != null && sellerTier.key !== 'caution';
 
   return (
     <Pressable onPress={onPress}>
@@ -474,7 +472,7 @@ function ListingCard({ item, index, scrollY, bgColor, onPress }) {
 
           {!!item.rating && (
             <View style={styles.ratingPill}>
-              <Ionicons name="star" size={11} color="#FBE74E" />
+              <Ionicons name="star" size={11} color={THEME.colors.trust.caution} />
               <AppText variant="caption" style={styles.tinyText}>{item.rating}</AppText>
             </View>
           )}
@@ -498,13 +496,12 @@ function ListingCard({ item, index, scrollY, bgColor, onPress }) {
             <AppText variant="caption" color={THEME.colors.muted} numberOfLines={1} style={{ flex: 1 }}>
               {item.sellerName ?? 'Seller'}
             </AppText>
-            {safety && (
-              <View style={[styles.safetyPill, { backgroundColor: safety.bg }]}>
-                <Ionicons name={safety.iconName} size={11} color={safety.iconColor} />
-                <AppText variant="caption" color={safety.fg} style={styles.tinyText}>
-                  {safety.label}
-                </AppText>
-              </View>
+            {showSafety && (
+              <TrustBadge
+                tier={sellerTier.key}
+                label={sellerTier.key === 'safe' ? 'Safe' : 'Flagged'}
+                size="sm"
+              />
             )}
           </View>
         </View>

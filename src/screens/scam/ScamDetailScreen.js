@@ -6,9 +6,9 @@ import { AppText } from '../../components/common/AppText';
 import { THEME } from '../../constants/theme';
 
 const RISK_BADGE = {
-  open:      { label: 'HIGH RISK', bg: THEME.colors.coral,   fg: THEME.colors.white, iconName: 'alert-circle', iconColor: '#fff' },
-  resolved:  { label: 'RESOLVED',  bg: THEME.colors.primary, fg: THEME.colors.white, iconName: 'checkmark-circle', iconColor: '#fff' },
-  reviewing: { label: 'REVIEWING', bg: THEME.colors.warning, fg: THEME.colors.text,  iconName: 'time', iconColor: '#000' },
+  open:      { label: 'HIGH RISK', bg: THEME.colors.trust.danger,  fg: THEME.colors.white, iconName: 'alert-circle', iconColor: '#fff' },
+  resolved:  { label: 'RESOLVED',  bg: THEME.colors.trust.safe,    fg: THEME.colors.white, iconName: 'checkmark-circle', iconColor: '#fff' },
+  reviewing: { label: 'REVIEWING', bg: THEME.colors.trust.caution, fg: THEME.colors.white, iconName: 'time', iconColor: '#fff' },
 };
 
 const formatDate = (ts) => {
@@ -44,7 +44,7 @@ export default function ScamDetailScreen({ navigation, route }) {
       <PageWrapper>
         <View style={styles.topBar}>
           <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={22} color="#000" />
+            <Ionicons name="arrow-back" size={22} color={THEME.colors.textPrimary} />
           </Pressable>
           <AppText variant="label">Report Detail</AppText>
           <View style={{ width: 40 }} />

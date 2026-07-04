@@ -26,6 +26,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { PageWrapper } from '../../components/common/PageWrapper';
 import { AppText } from '../../components/common/AppText';
+import { TrustBadge } from '../../components/common/TrustBadge';
 import { RowSkeleton } from '../../components/common/Skeleton';
 import { THEME } from '../../constants/theme';
 import { STRINGS } from '../../constants/strings';
@@ -166,7 +167,7 @@ export default function CallLogsScreen({ navigation }) {
         <View style={styles.header}>
           <AppText variant="heading">{STRINGS.callLogs.title}</AppText>
           <Pressable style={styles.filterIcon} hitSlop={8} onPress={() => toast.info('Filters coming soon')}>
-            <Ionicons name="ellipsis-vertical" size={20} color="#5A585A" />
+            <Ionicons name="ellipsis-vertical" size={20} color={THEME.colors.textSecondary} />
           </Pressable>
         </View>
 
@@ -247,7 +248,7 @@ function FilterPill({ label, active, onPress }) {
     backgroundColor: interpolateColor(
       progress.value,
       [0, 1],
-      [THEME.colors.subtle, THEME.colors.dark]
+      [THEME.colors.subtle, THEME.colors.primary]
     ),
   }));
 
@@ -288,10 +289,10 @@ const AVATAR_COLOR = {
 };
 
 const STATUS_TEXT_COLOR = {
-  flagged:     THEME.colors.coral,
-  scamBlocked: THEME.colors.coral,
+  flagged:     THEME.colors.trust.danger,
+  scamBlocked: THEME.colors.trust.danger,
   safe:        THEME.colors.primary,
-  missed:      THEME.colors.coral,
+  missed:      THEME.colors.trust.danger,
   receptionist: THEME.colors.muted,
 };
 
@@ -368,32 +369,22 @@ function LogRow({ log, index, onPress, onLongPress }) {
 
 function StatusEnd({ log }) {
   if (log.status === 'flagged' || log.status === 'scamBlocked') {
-    return (
-      <View style={[styles.statusPill, styles.statusPillRow, { backgroundColor: 'rgba(255,90,77,0.1)' }]}>
-        <Ionicons name="flag" size={11} color={THEME.colors.coral} />
-        <AppText variant="caption" color={THEME.colors.coral}>Flagged</AppText>
-      </View>
-    );
+    return <TrustBadge tier="danger" label="Flagged" size="sm" />;
   }
   if (log.status === 'safe') {
-    return (
-      <View style={[styles.statusPill, styles.statusPillRow, { backgroundColor: 'rgba(0,102,255,0.1)' }]}>
-        <Ionicons name="shield-checkmark" size={11} color={THEME.colors.primary} />
-        <AppText variant="caption" color={THEME.colors.primary}>Safe</AppText>
-      </View>
-    );
+    return <TrustBadge tier="safe" label="Safe" size="sm" />;
   }
   if (log.status === 'missed') {
     return (
       <View style={styles.callBackBtn}>
-        <Ionicons name="call" size={18} color="#5A585A" />
+        <Ionicons name="call" size={18} color={THEME.colors.textSecondary} />
       </View>
     );
   }
   if (log.status === 'receptionist') {
     return (
       <View style={styles.callBackBtn}>
-        <Ionicons name="play" size={16} color="#5A585A" />
+        <Ionicons name="play" size={16} color={THEME.colors.textSecondary} />
       </View>
     );
   }

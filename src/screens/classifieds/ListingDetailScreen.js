@@ -16,6 +16,7 @@ import { format, formatDistanceToNowStrict } from 'date-fns';
 import { PageWrapper } from '../../components/common/PageWrapper';
 import { AppText } from '../../components/common/AppText';
 import { Button } from '../../components/common/Button';
+import { TrustRing } from '../../components/common/TrustRing';
 import { SkeletonBox } from '../../components/common/Skeleton';
 import { THEME } from '../../constants/theme';
 import { haptics } from '../../constants/animations';
@@ -254,7 +255,7 @@ export default function ListingDetailScreen({ navigation, route }) {
 
             {!!listing.location && (
               <View style={styles.locationRow}>
-                <Ionicons name="location-outline" size={14} color="#5A585A" />
+                <Ionicons name="location-outline" size={14} color={THEME.colors.textMuted} />
                 <AppText variant="caption" color={THEME.colors.muted}>{listing.location}</AppText>
               </View>
             )}
@@ -282,7 +283,7 @@ export default function ListingDetailScreen({ navigation, route }) {
             <View style={styles.divider} />
 
             <View style={styles.sellerLabelRow}>
-              <Ionicons name="person-outline" size={12} color="#5A585A" />
+              <Ionicons name="person-outline" size={12} color={THEME.colors.textMuted} />
               <AppText variant="caption" color={THEME.colors.muted} style={styles.sellerLabel}>
                 POSTED BY
               </AppText>
@@ -311,7 +312,7 @@ export default function ListingDetailScreen({ navigation, route }) {
                   </AppText>
                 )}
               </View>
-              <ScoreRing score={seller?.reputationScore ?? 900} />
+              <TrustRing score={seller?.reputationScore ?? 900} size={44} label={null} />
               <AppText variant="caption" color={THEME.colors.primary} style={{ marginLeft: 6 }}>
                 View →
               </AppText>
@@ -320,7 +321,7 @@ export default function ListingDetailScreen({ navigation, route }) {
             <View style={styles.metaRow}>
               {createdAt && (
                 <View style={styles.metaCluster}>
-                  <Ionicons name="calendar-outline" size={12} color="#5A585A" />
+                  <Ionicons name="calendar-outline" size={12} color={THEME.colors.textMuted} />
                   <AppText variant="caption" color={THEME.colors.muted}>
                     Listed {formatDistanceToNowStrict(createdAt)} ago
                   </AppText>
@@ -366,17 +367,6 @@ function formatPrice(listing) {
   if (typeof listing.price !== 'number') return '—';
   const formatted = `₹${listing.price.toLocaleString('en-IN')}`;
   return listing.priceUnit ? `${formatted}${listing.priceUnit}` : formatted;
-}
-
-function ScoreRing({ score }) {
-  const pct = Math.max(0, Math.min(1, score / 1000));
-  const ringColor =
-    pct >= 0.7 ? THEME.colors.primary : pct >= 0.4 ? THEME.colors.warning : THEME.colors.coral;
-  return (
-    <View style={[styles.scoreRing, { borderColor: ringColor }]}>
-      <AppText variant="caption" style={styles.scoreText}>{score}</AppText>
-    </View>
-  );
 }
 
 function ListingDetailSkeleton() {
